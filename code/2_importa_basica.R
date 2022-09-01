@@ -17,8 +17,10 @@ input    <- paste0(root, "input/")
 output   <- paste0(root, "output/")
 tmp      <- paste0(root, "tmp/")
 code     <- paste0(root, "code/")
+alunos   <- paste0(root, "alunos/")
 setwd(root)
 
+# Le todas as colunas e decide quais sao numericas
 col_types <- readr::cols(.default = readr::col_character())
 #######################################
 
@@ -46,11 +48,11 @@ secundaria_10_12 <- secundaria_10_12%>%
 #          ignore_col_order=TRUE )
 
 # Append- agregacao das bases, uma base em cima da outra
-base_alunos <- bind_rows(basica, secundaria_7_9,
+base_alunos <- bind_rows(basica, secundaria_7_9, # append das bases
                          secundaria_10_12) %>%
-  mutate(distrito=replace(distrito,
+  mutate(distrito=replace(distrito, # corrige o distrito
                           distrito=="LOBATA","Lobata"), 
-         classe = gsub("ª", "", classe))
+         classe = gsub("ª", "", classe)) # Tira o "ª" 
 
 #transforma de volta as colunas numericas para o formato de numero  
 base_alunos <- readr::type_convert(base_alunos) 
@@ -76,6 +78,24 @@ base_alunos <- base_alunos %>%
 
 
 crosstable(base_alunos, c(classe_f), by=c(distorcao), total="both", 
-           percent_pattern="{n} ({p_row}/{p_col})", percent_digits=0) %>%
+           percent_pattern="{n} ({p_row})", percent_digits=0) %>%
   as_flextable()
 
+# Exercicio
+
+medias_construto <- measure_mean %>% 
+  group_by(construto) %>% 
+  summarise( media_respostas = mean(resposta, na.rm=TRUE),
+             median_repostas = median(resposta, na.rm=TRUE), 
+             median_repostas = median(resposta, na.rm=TRUE), 
+             moda_respostas  = mode(resposta),
+             desv_pad_repostas = sd(resposta, na.rm=TRUE),
+             perc_missing    = mean(is.na(resposta))
+  )
+
+ciclo <- base_alunos %>% 
+  mutate(case_when(
+    classe == 1 ~ "1o ciclo", 
+    classe == 2 ~ "1o ciclo", 
+    classe == 3 ~ "2o ciclo", 
+    classe == 4 ~ "2o ciclo"  ))
