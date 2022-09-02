@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Manipulação de bases no R</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor: Vitor Pereira" />
+    <meta name="date" content="2022-02-09" />
+    <script src="Aula_R_files/header-attrs-2.16/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# Manipulação de bases no R
+]
+.author[
+### Professor: Vitor Pereira
+]
+.date[
+### 02/09/2022
+]
+
+---
+
+
+
+
+
+## Preâmbulo
+
+- Apagando tudo no ambiente
+
+
+```r
+rm(list=ls()) # apaga tudo no ambiente
+```
+
+- Instalar os pacotes de que precisarás
+  - Pacotes padrão (CRAN) podem ser instalados com:
+
+
+```r
+install.packages("devtools")
+```
+
+  - Outros pacotes armazenaos no github precisam do Devtools::
+
+```r
+devtools:: install_github("data-edu/dataedu")
+```
+
+- Depois precisamos carregar os pacotes
+  - Notem que não precisamos das aspas
+
+```r
+library(devtools)
+```
+
+---
+## Preâmbulo
+
+- O pacote "pacman" já inspeciona quais pacotes tens instalados, instala o que não tiver sido instalado e já carrega os pacotes
+
+
+```r
+pacman:: p_load(tidyverse, apaTables, sjPlot,
+                readxl, dataedu, zelador, epiDisplay)
+```
+
+Para São Tomé e Príncipe, é importante acertar a hora do R:
+
+```r
+Sys.setenv(TZ="UCT") # Acerta a hora de STP
+```
+
+---
+
+# Preâmbulo: Os caminhos
+
+- Os caminhos servem para organizar o trabalho
+  - São cruciais para trabalhar colaborativamente!
+  - Para alterar de um computador para o outro, basta modificar a linha "root"
+  
+
+```r
+# Paths
+root     &lt;- "C:/Users/vitor/Dropbox (Personal)/Sao Tome e Principe/2022/Boletim_estatisco/"
+input    &lt;- paste0(root, "input/")
+output   &lt;- paste0(root, "output/")
+tmp      &lt;- paste0(root, "tmp/")
+code     &lt;- paste0(root, "code/")
+alunos   &lt;- paste0(root, "alunos/")
+setwd(root)
+```
+
+- Atenção: 
+  - As barras são para a direita!
+  - As vezes o cominho fica muito longo e o R não consegue ler. Nesse caso, é melhor salvar a pasta do projeto em C:\
+
+---
+
+# Preâmbulo: Último passo...
+
+- Se precisarmos em algum momento passar toda a base para caractere ( para poder fazer o append/rbind/apensar bases na vertical)
+
+
+
+```r
+# Le todas as colunas e decide quais sao numericas
+col_types &lt;- readr::cols(.default = readr::col_character())
+```
+
+- Essa linha será aproveitada depois quando for converter de volta as colunas com números para fomato numérico. Não se esqueça de carregar o pacote readr
+
+
+```r
+#transforma de volta as colunas numericas para o formato de numero  
+base_alunos &lt;- readr::type_convert(base_alunos) 
+```
+
+
+- Por último, separe visualmente cada parte do código
+
+
+```r
+#######################################
+```
+
+- Atenção: Comentem abundantemente seus códigos com o cardinal
+
+---
+
+# Como abrir a base
+
+- A forma de abrir a base dependerá do formato da base
+
+- Arquivos em csv podem ser abertos através do pacote readr()
+
+
+```r
+pacman:: p_load(readr)
+iris &lt;- read_csv("iris.csv")
+```
+
+- Arquivos de excel em xlsx podem ser abertos atravé do pacote readxl. Observe que precisamos nomear o ficheiro e a folha.
+
+
+```r
+pacman::p_load(readxl)
+basica&lt;-read_excel(paste0(input, "BASE BÁSICO - inicio ano 2021-2022.xlsx"), sheet = "Base Aluno")
+```
+
+---
+# Como abrir a base
+
+- Arquivos em stata precisam do pacote readstata13
+
+
+```r
+pacman::p_load(readstata13)
+dat &lt;- read.dta13("TEAdataSTATA.dta")
+```
+
+- Arquivos em SPSS dependem do pacote 
+
+
+```r
+pacman::p_load(haven)
+dataset = read_sav(path)
+```
+
+- Arquivos em txt
+
+```r
+df &lt;- read.table("dataset.txt", header=TRUE, sep=",")
+```
+
+---
+
+# Visualizando a base
+
+- Os comandos View(), head(), str(), tab1()  e summary() servem para inspecionar a base de dados
+
+
+```r
+# vamos abrir o pacote
+library(readr)
+library(epiDisplay)
+iris &lt;- read_csv("iris.csv")
+head(iris) #primeiras linhas
+str(iris) # estrutura da base
+View(iris) # abre a base para poder olhar
+summary(iris) # faz um resumo da base
+tab1(iris$sepal.length)
+```
+
+_ O str mostra a estrutura da base
+- Não confundam summary com summarise. O summary() vai dar um resumo de cada variável
+- O tab1 depende do pacote epiDisplay
+
+---
+# Como limpar as bases
+
+- Os nomes das colunas das bases não podem ter espaços, nem traços, nem caracteres especiais
+- Para limpar esses nomes, basta utilizar o comando clean_names() do pacote janitor()
+
+
+```r
+# Limpando os nomes das variáveis
+pacman::p_load(janitor)
+pre_survey &lt;- clean_names(dataedu::pre_survey)
+```
+
+---
+# Como limpar as bases
+
+- Os nomes de algumas colunas podem vir muito grandes ou ser pouco informativos. Para modificar, utilizamos o comando rename()
+
+
+```r
+# renomear variaveis
+pre_survey &lt;- pre_survey %&gt;%
+  rename(
+    q1 = q1maincellgroup_row1 , 
+    q2 = q1maincellgroup_row2 , 
+    q3 = q1maincellgroup_row3 , 
+    q4 = q1maincellgroup_row4 , 
+    q5 = q1maincellgroup_row5 , 
+    q6 = q1maincellgroup_row6 , 
+    q7 = q1maincellgroup_row7 , 
+    q8 = q1maincellgroup_row8 , 
+    q9 = q1maincellgroup_row9 , 
+    q10 = q1maincellgroup_row10, 
+    usuario = opdata_username, 
+    curso = opdata_course_id
+    ) 
+```
+---
+
+# Remover colunas e linhas vazias
+
+- Para remover as colunas e linhas vazias, utilze o comando remove_empty(), do pacote janitor
+
+
+```r
+# Remove as linhas e colunas vazias
+ remove_empty(c("rows", "cols"))
+```
+
+---
+
+# Limpar o conteúdo das variáveis
+
+- É possível retirar caracteres especiais
+  - Dentro de uma pipe(%&gt;%), coloque:
+  
+
+```r
+   classe = gsub("ª", "", classe)) # Tira o "ª" 
+```
+
+- Nesse exemplo, retiramos todos símbolos "ª" da variável classe, permitindo convert-la para números 
+
+---
+
+# Limpar o conteúdo das variáveis
+
+- Também é possível modificar o conteúdo de uma variável. 
+
+- Para isso, vamos utilizar os comandos mutate() e replace() do pacote dplyr()
+
+
+```r
+pacman::p_load(dplyr)
+# Append- agregacao das bases, uma base em cima da outra
+base_alunos &lt;- base_alunos %&gt;% 
+  mutate(distrito=replace(distrito, # corrige o distrito
+                          distrito=="LOBATA","Lobata"))
+```
+
+---
+
+# Limpar o conteúdo das variáveis
+
+- Também é possível utilizar o comando case_when () do mutate() e dplyr() 
+
+- Também podemos utilizar o mutate(case_when()) para criar novas variáveis. Exemplo:
+
+
+```r
+base_alunos &lt;- base_alunos %&gt;% 
+  mutate(distorcao = case_when(
+    idade-classe-5 &gt;=2 ~ "Em distorção",
+    idade-classe-5 &lt; 2 ~ "Fora de distorção" )) 
+```
+
+
+---
+
+# Manipulando os dados: O dplyr
+
+- O pacote dplyr possui alguns comandos bastante importantes:
+
+select() - seleciona colunas
+arrange() - ordena a base
+filter() - filtra linhas
+mutate() - cria/modifica colunas
+group_by() - agrupa a base
+summarise() - sumariza a base
+
+
+---
+
+# Exemplos- dplyr: O mutate
+
+
+```r
+- Mutate para criar uma nova variável categórica
+
+measure_mean &lt;- measure_mean %&gt;% 
+  mutate( construto = case_when(
+      questao %in% c("q1", "q4", "q5", "q8", "q10") ~ "interesse" ,
+      questao %in% c("q2", "q6" , "q9") ~ "utilidade do curso", 
+      questao %in% c("q3", "q7") ~ "competencia percebida"))
+```
+
+---
+
+# Exemplos- dplyr: O select
+
+- O comando select irá selecionar as colunas desejas
+
+```r
+basica &lt;- basica %&gt;% 
+  dplyr::select(codigo_escola) %&gt;%  # Ficamos apenas com o códiugo da escola
+```
+
+- Se você quiser todas as colunas, exceto algumas, basta colocar o símbolo de menos (-) antes da variável que desejas excluir. 
+
+
+```r
+basica &lt;- basica %&gt;% 
+  dplyr::select(-codigo_escola) %&gt;%  # ficamos com todas as colunas, excepto o codigo_escola
+```
+
+---
+
+ 
+# O group_by e o summarise
+
+
+- O comando group_by() irá agrupar "virtualmente" a base de dados de acordo com os valores de uma coluna. Em geral, é utilizado logo antes de uma operação em que a base será reduzida/colapsada através do summarise
+
+
+```r
+medias_construto &lt;- measure_mean %&gt;% 
+  group_by(construto) %&gt;% 
+  summarise( 
+    # Média
+    media_respostas = mean(resposta, na.rm=TRUE),
+    # Mediana
+    median_repostas = median(resposta, na.rm=TRUE), 
+    # Desvio Padrao
+    desv_pad_repostas = sd(resposta, na.rm=TRUE),
+    # Percentual de missings
+    perc_missing    = mean(is.na(resposta), 
+    # Total de linhas
+    total_respostas = n() ,
+    # Número de valores distintos de escolas
+    total_escolas= n_distinct(school) )
+```
+
+
+
+---
+ 
+ ## Transformando todas as colunas em texto
+ 
+ - As vezes , para fazer uma junção na vertical, precisamos passar todas as colunas para texto.
+ 
+  - Por que? Porque o formato de cada coluna deve ser o mesmo. Se uma delas é diferente, teremos um erro. 
+
+
+```r
+# transforma tudo em texto
+base_alunos %&gt;%  base alunos %&gt;% 
+  mutate(across(.fns = as.character)) # transformamos todas as colunas em texto
+```
+
+- Depois de feito o append/rbind, é importante voltar com as colunas numéricas
+
+
+```r
+base_alunos &lt;- bind_rows(basica, secundaria_7_9, 
+      secundaria_10_12) %&gt;% # append das bases
+# Converte de volta
+  base_alunos &lt;- readr::type_convert(base_alunos)
+```
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

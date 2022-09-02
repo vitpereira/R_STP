@@ -68,13 +68,15 @@ measure_mean <- measure_mean %>%
       questao %in% c("q3", "q7") ~ "competencia percebida"))
 
 
+# Vamos fazer as medias por construto
 medias_construto <- measure_mean %>% 
-  group_by(construto) %>% 
-  summarise( media_respostas = mean(resposta, na.rm=TRUE),
-             median_repostas = median(resposta, na.rm=TRUE), 
-             median_repostas = median(resposta, na.rm=TRUE), 
-             moda_respostas  = mode(resposta),
-             desv_pad_repostas = sd(resposta, na.rm=TRUE),
-             perc_missing    = mean(is.na(resposta))
+  group_by(construto) %>%  # agrupa por construto
+  summarise( media_respostas = mean(resposta, na.rm=TRUE), # media
+             median_repostas = median(resposta, na.rm=TRUE), # mediana
+             desv_pad_repostas = sd(resposta, na.rm=TRUE), # desvio padrao
+             perc_missing    = mean(is.na(resposta)) # percentual de missings
              )
+
+
+
 
