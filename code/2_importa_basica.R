@@ -99,3 +99,9 @@ ciclo <- base_alunos %>%
     classe == 2 ~ "1o ciclo", 
     classe == 3 ~ "2o ciclo", 
     classe == 4 ~ "2o ciclo"  ))
+
+rm(list=c("ciclo"))
+
+# Salva o ambiente em R
+
+save.image(file = "alunos_todos.RData")
