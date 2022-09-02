@@ -104,4 +104,4 @@ rm(list=c("ciclo"))
 
 # Salva o ambiente em R
 
-save.image(file = "alunos_todos.RData")
+save.image(file = paste0(tmp,"alunos_todos.RData"))
