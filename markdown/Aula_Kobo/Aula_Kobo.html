@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>CAPACITAÇÃO EM KOBO TOOLBOX - Equipa de Estatística e Avaliação</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Professor: Vitor Pereira" />
+    <script src="Aula_Kobo_files/header-attrs-2.15/header-attrs.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+.title[
+# CAPACITAÇÃO EM KOBO TOOLBOX - Equipa de Estatística e Avaliação
+]
+.author[
+### Professor: Vitor Pereira
+]
+.date[
+### 29/08/2022
+]
+
+---
+
+
+
+
+
+## Bem vindos à Formação!
+
+- Quem sou eu ?
+
+&lt;img src="Vitor.png"&gt;
+
+---
+## Nossas formações nas próximas 5 semanas
+
+--
+
+
+- Kobo
+
+--
+
+ 
+- R
+
+--
+
+ 
+- Dashboard em R
+
+---
+## As 3 formações são interligadas
+
+- Kobo é uma ferramenta de coleta de dados
+
+--
+
+- R é uma ferramenta para o processamento e análise de dados
+
+--
+
+- Versatilidade do R é tão grande que permite integrar com o Kobo e fazer dashboards para apresentar painéis com gráficos e estatísticas atualizados em tempo real
+
+---
+## Nosso cronograma
+
+- Semana 1: Kobo
+
+- Semanas 2 e 3: R
+
+- Semana 4: R Markdown e Dashboard em Shiny/Flexdashboard
+
+
+---
+## Nosso cronograma- Semana 1
+
+1- Apresentação dos cursos, apresentação do Kobo, criação da conta, a interface, controle de acesso, exemplo de projeto. Forma Web e forma de telemóvel
+
+2- Criando o 1o projeto: Preview, deploy e download. O XLS Form. Tipos de questões.  Utilizando as opções de questões. Column name, guidance hint, mandatory response, default response, appearence.  Saltos (skip), Limiting responses, validação. 
+
+3- Questões em cascata. Opções de resposta através de arquivo. Grupos de questões. Expressões regulares. Datas e hora. Questões de mídia: Áudio, fotos, video, GPS e Assinatura. 
+
+4- Calculate. Rosters e sorteios. Números seriais. Incluindo respostas em outras questões.
+
+5- Administração do projeto. Fluxos e datas. Validação de formulários. Edição e supressão de formulários. Integração com R e Power BI. 
+
+
+---
+## As actividades da tarde
+
+- Vamos definir e trabalhar em um projeto aplicando os conhecimentos da manhã
+
+- Sugestão: Censo da educação de São Tomé
+
+---
+## O KOBO TOOLBOX
+
+---
+## Por que o Kobo?
+
+- Ferramenta muito versátil para captura de dados
+
+- Milhares de aplicações
+
+- Cada vez mais popular
+
+- Gratuito
+
+- Acompanhamento em tempo real da coleta de dados
+
+---
+## Por que o Kobo?
+
+- Possibilidade de integração com o R e Power BI
+
+- Permite a captura de:
+
+  - Imagens
+(incluindo cartões de resposta de questões de múltipla escolha)
+  - Vídeos
+  - Audio   
+  - Coordenadas de GPS
+  - Códigos de barra e QRCode
+
+- Permite gravar o aúdio de toda a entrevista
+  - Facilita checagem de erros de imputação
+
+---
+## Por que o Kobo?
+
+- Permite:
+
+  - Fazer cálculos simples
+  - Condicionar questões à respostas anteriores
+  - Programar saltos
+  - Programar blocos de questões a serem repetidos
+  - Apresentar resultados de respostas anteriores
+
+---
+## Possíveis aplicações
+
+- Observações de sala de aula 
+  - como o TEACH
+
+- Avaliações de leitura e contagem de palavras
+  - como EGRA e avaliação de leitura em Sobral
+  
+- Questionários contextuais
+  - AALEB, PASEC, AALES
+  
+- Avaliações de desempenho com cartão de resposta
+
+---
+## Possíveis aplicações
+
+- Cadastramento de professores
+
+- Cadastramento e censo de alunos
+
+- Censo/mapeamento de escolas 
+  - com características, pessoal, infraestrutura e fotos dos equipamentos
+  
+- Formulários de preenchimento rápido pelos diretores
+
+---
+## O que mais o Kobo faz?
+
+- Permite fazer a captura on line e offline
+  - Não precisa de conexão com internet!
+  - Dados são coletados e depois sobem quando houver conexão
+
+- Coleta por PC (Enketo Web Form) ou por telemóveis Android
+
+---
+## Os criadores do Kobo
+
+- Harvard Humanitarian Initiative
+  - Phuong Pham e Patrick Vinck, em 2009
+
+- Hoje é uma organização sem fins lucrativos
+  - Kobo Inc. 
+
+---
+## Elementos do Kobo Toolbox
+
+- O Form Builder
+
+&lt;img src="formbuilder1.png" width="600"&gt;
+
+- É possivel editar questões no form builder e passar para xls e vice versa
+
+---
+## Elementos do Kobo Toolbox
+
+- A biblioteca
+
+
+&lt;img src="library1.png" width="600"&gt;
+
+
+- Com a biblioteca, é possível guardar questões de outrs formulários
+- Podemos então pegar questões de outros formulários e inserir no nosso
+
+---
+## Elementos do Kobo Toolbox
+
+- O Kobo Collect
+&lt;img src="kobocollect.png" width="600"&gt;
+- O kobo collect permite inputar os dados através de um telemóvel com sistema Android
+
+---
+## Elementos do Kobo Toolbox
+
+- O Enketo Web Form
+
+&lt;img src="enketo1.png" width="650"&gt;
+
+- Através do Enketo, podemos inputar os dados em um PC, utilizando o navegador web. 
+- Podemos também utilizar o Enketo no navegador do telemóvel
+
+---
+## Data management
+
+- A aba de administração dos dados nos permite rever, editar e baixar os dados que estão a ser colectados no campo
+
+&lt;img src="data_management.png"&gt;
+
+- A aba tamém permite montar relatórios, e ver as coordenadas de GPS dos locais onde os dados foram colectados
+
+---
+## Project management
+
+- A aba de administração do projeto permite compartilhar o formulário entre membros da equipa, assim como os dados
+
+&lt;img src="project_management.png" width="600"&gt;
+
+- Também permite submeter formulários para a web, adicionar arquivos .csv (como listas de escolas) e arquivos de mídia
+
+---
+## Exemplos de aplicões
+
+- O kobo no telemóvel
+
+- O kobo no computador pessoal
+
+---
+## O kobo no telemóvel
+
+- Instalar o Kobo Toolbox através do Google Play
+
+- Exemplo: Formulário do Teach em Angola
+- Exemplo: Empoderamento das raparigas na COVID-19
+
+---
+## O kobo no PC
+
+- Formulário de informações de creches conveniadas no Rio de Janeiro
+
+---
+## Vamos criar nossos formulários!
+
+- Vimos a aplicação do Kobo do lado do inquiridor que está a coletar os dados
+
+- Agora vamos ver como funciona a criação e o gerenciamento de um formulário
+
+- Há 2 Tipos de conta:
+  - Comum
+  - Humanitária 
+
+- A conta humanitária é mais completa. 
+
+---
+## Criando a conta
+
+- Site:  https://kobo.humanitarianresponse.info
+
+- Vamos todos criar uma conta humanitária com login e senha. Não esqueçam a senha!
+
+---
+## Visualizando o painel do Kobo
+
+---
+## 2 formas de construir um formulário
+
+- 1: ON Line 
+  - Mais intuitiva
+- 2: Via Excel
+  - Mais flexível e poderosa
+
+- (Há uma 3a forma, via HTML. Esta é equivalente à programação via Excel, porém apenas mais trabalhosa e confusa)
+
+- Na prática, podemos sempre combinar a construção via Excel e On Line. Cada uma possui suas vantagens e desvantagens
+
+---
+## Projectos 
+
+- Há 3 tipos de status dos projectos
+  - Draft: Projectos em draft são rascunhos que ainda nao foram submetidos. Não podem ser visualizados no Enketo ou no Kobo Collect
+  
+  - Deployed: Projectos submetidos estão em andamento e podem ter dados coletados
+  
+  - Archived: Projetos arquivados sçao projetos já finalizados e que nao aceitam mais dados
+
+---
+## Ações dos projetos
+
+- Edit: Editar o projecto
+
+- Add Tags: Adicionar marcadores para faciliatr a busca do projeto
+
+- Share: Compartilhar o projeto com outras pessoas
+
+- Clone: Fazer uma cópia de um outro projecto
+
+---
+## Mais ações
+
+- Replace form. Quando substituimos um formulario xls por outro. Iremos fazer isso muitas e muitas vezes!!!!
+
+- Manage translation: Administra as diferentes línguas em que o formulário pode ser escrito
+
+- Download XLS: Baixa o último formulario XLS disponível. Vamos fazer isso muitas e muitas vezes!!!!
+
+---
+## Mais ações
+
+- Download xml: Permite explorar estruturas mais complexas para integração com outros softwares. 
+
+- Archive: Arquiva o projeto e não permite mais a entrada de dados
+
+- Create Template: Gera um exemplo para a biblioteca
+
+- Delete: Apaga todo o projeto e joga na lixeira
+
+---
+## Vamos criar nosso primeiro formulário!
+
+- Vamos começar com o form builder. 
+
+- Clique em "Build from Scratch" (começar do zero)
+
+- Insira as infromações importantes sobre o projeto e clique em "CREATE PROJECT"
+
+- Clique no botão + onde diz "This form is empty"
+
+&lt;img src="add_new_question.png"&gt;
+
+
+---
+## Vamos criar nosso primeiro formulário!  
+  
+- Adicione a questão."Qual é o seu nome?"
+
+&lt;img src="add_question_button.png"&gt;
+
+
+- Escolha o tipo de questão mais apropriado
+
+&lt;img src="question_types.png"&gt;
+
+
+---
+## Agora vamos fazer algumas questões adicionais!
+
+- Quantos anos tens?
+
+- Gênero: Feminino, Masculino, Não binário, outro
+
+- Depois de adicionadas as questões, clique no botão SALVAR no topo da tela
+
+- Vamos visualizar o que temos. Recomendo sempre visualizar o formulário, para certificar que está tudo a correr bem. 
+
+
+&lt;img src="preview2.png"&gt;
+
+
+---
+## Deploying (lançamento)
+
+- Para que possamos inputar dados, seja no Enketo ou no Kobo Collect, precisamos fazer o "lançamento do foguete". 
+
+- Certifique-se de que você salvou as questões. 
+
+- Feche a aba
+
+- Clique no botão "DEPLOY"
+
+  - Se estiver tudo certo, você conseguirá fazer o lançamento. Muitas e muitas vezes, aparecerá uma mensagem de erro impedindo o lançamento. Nesse caso, é preciso checar qual é o problema. É muito, MUITO, comum termos algum erro no formulário. 
+
+---
+## Inputando dados pela Web
+
+- Vamos utilizar o Enketo Web Form por enquanto
+
+- Há várias formas de coletar os dados. Vamos falar sobre isso mais adiante. Por enquanto, selecione "On Line-Offline (multiple submissions)". 
+
+- Clique em OPEN
+
+- Entre os dados e clique em SUBMIT
+
+---
+## Visualizando os dados
+
+- Volte para a aba do Kobo Toolbox
+- Actualize a página
+- Você verá no topo quantas pessoas já submeteram os dados
+
+&lt;img src="submissions.png" width = "500"&gt;
+
+
+- Para ver os dados submetidos, clique em DATA
+
+&lt;img src="data_tab.png"  width = "500"&gt;
+
+
+---
+## Baixando os dados
+
+- Para baixar os dados, clique em DOWNLOAD
+
+- Depois em EXPORT, para gerar um arquivo Excel
+
+
+&lt;img src="exports.png"&gt;
+
+
+- Por último, baixe os dados no botão DOWNLOAD
+
+---
+## O Formulário em excel
+
+- Vamos baixar o formulário que criamos, em XLS
+
+- O XLS Form é um jeito estruturado de organizar o formulário
+
+- Muitas vezes é mais fácil trabalhar coletivamente num projeto de Kobo utilizando o XLS Form. Afinal, podemos fazer o upload do formulário para o Google Sheets e trabalhar nele a muitas mãos, on line!
+
+---
+## A estrutura do XLS Form
+
+- O XLS Form possui uma estrutura mínima, básica, que pode ser expandida
+
+- 3 abas/planilhas: survey, choices e settings (sempre em minúsculas!)
+
+- Na planilha survey, 3 colunas: type, name e label
+
+- Na planilha choices, 3 colunas: list_name, name e label
+
+- Na planilha settings, 1 coluna: form_title
+
+---
+## A planilha survey
+
+- A coluna "type" define o tipo de questão. Se será uma questão de uma única escolha, mútiplas escolhas, se um número, um texto, apenas um aviso, etc...
+
+  - É preciso verificar a tabela com os diferentes tipos de questão
+
+- A coluna "name" dá o nome da questão. Pense neste como um nome de uma variável que estás a definir. Poderemos nos referir à esta variável ao longo de outras questões do formulário.
+
+- A coluna "label" define o que irá aparecer para o usuário. É a mensagem que vai na tela do Enketo ou do Kobo Collect
+
+- No caso da pergunta "Qual é o seu nome?", temos: type = text, name = seu_nome, label = "Qual é o seu nome?"
+
+---
+## Questões de escolhas de lista
+
+- Vamos falar mais a fundo sobre listas mais tarde. Mas, pode enquanto, vamos ver como incluir a questão com o gênero da pessoa.
+
+- O tipo de questão será select one. Mas precisamos dizer também de que lista devemos selecionar uma resposta. Vamos colocar, portanto, select one gender como o tipo da questão. 
+
+- O nome é apenas a variável que irá guardar a resposta dessa pergunta. Chamemos de gender_1
+
+- O label é o que aparece no Enketo: "Qual é o seu gênero?"
+
+---
+
+# Escolha de lista. Como fazer?
+
+- Na aba survey, vamos especificar que queremos uma questão com apenas uma escolha. 
+
+  - Fazemos isso na coluna type: **select one gender**
+  - Note que **gender** é apenas a lista de opções de gênero
+
+&lt;img src="genero.png"  width = "600"&gt;
+
+- Na aba choices, devemos especificar as opções da lista de gênero
+
+&lt;img src="gender_choices.png"  width = "250"&gt;
+  
+
+---
+
+# Lista com múltiplas opções de escolha
+
+- Certas vezes, queremos que o entrevistado possa marcar mais de uma opção possível. 
+
+- Para isso, utilizamos como opção na coluna type ** select multiple**
+
+- Exemplo: Na aba survey:
+&lt;img src="energia.png"  width = "680"&gt;
+
+- Na aba choices:
+
+&lt;img src="energia_choices.png"  width = "380"&gt;
+
+---
+
+# Escolhas em "cascata"
+
+- É possível fazer com que uma lista seja condicional à escolha do item anterior
+
+- Chamamos isso de escolha em cascata
+
+- A forma exata da sintaxe dependerá de a questão anterior ser de escolha única ou multipla
+
+---
+
+# Exemplo: Lista de escolas depende do distrito
+
+- Primeiro selecionamos o distrito, e baseado no distrito, apenas as escolas daquele distrito aparecerão como opção
+
+- Para isso, precisamos de 2 passos:
+  - Passo 1: Adicionar uma coluna extra na aba choices. Essa coluna irá mostrar como um item depende de outro
+    - No nosso caso, iremos criar a coluna **dist**
+&lt;img src="dist_escola2.png"  width = "380"&gt;
+    - Repare que, depois de listar os distritos, dizemos quais escolas pertencem a quais distritos na coluna **dist**
+
+---
+# Exemplo: Lista de escolas depende do distrito
+
+- Passo 2: Vamos adicionar uma coluna na aba survey, chamada **choice_filter**
+  - Essa coluna irá indicar a dependência entre uma variável e outra
+  - Sempre que nos referenciarmos à uma variável de dados no kobo, utilizamos o símbolo de cifrão **$** e as chaves **{}**
+
+&lt;img src="dist_escola1.png"  width = "700"&gt;
+
+  - A sintaxe **dist=${Distrito}** indica que filtraremos, na coluna **dist** da aba **choices**, apenas a opção marcada na variável ** ${Distrito}**
+  
+  - Reparece que **Distrito** é a variável que guarda a opção marcada na escolha do distrito
+
+---
+
+# Exemplo: Lista de escolas depende do distrito
+
+- Passo 2: Vamos adicionar uma coluna na aba survey, chamada **choice_filter**
+  - Essa coluna irá indicar a dependência entre uma variável e outra
+  - Sempre que nos referenciarmos à uma variável de dados no kobo, utilizamos o símbolo de cifrão **$** e as chaves **{}**
+
+&lt;img src="dist_escola1.png"  width = "700"&gt;
+
+  - A sintaxe **dist=${Distrito}** indica que filtraremos, na coluna **dist** da aba **choices**, apenas a opção marcada na variável ** ${Distrito}**
+  
+  - Reparece que **Distrito** é a variável que guarda a opção marcada na escolha do distrito
+
+
+---
+
+# Exemplo: Cascata após uma escolha multipla
+
+- Se a questão anterior for de escolha múltipla, em vez de escolha de opção única, a sintaxe é um pouco diferente. 
+
+- O passo 1 é o mesmo, apenas modificamos o passo 2. 
+
+- No passo 2, na coluna **choice_filter**, iremos escrever **selected(${[QUESTAO_ANTERIOR]},[COLUNA_DEPENDENCIA_ABA_CHOICES])**
+
+- Vamos ver isso no exemplo da escolha do tipo de ensino ofertado e das classes disponíveis na escola
+  -Dependendo dos níveis ofertados, temos diferentes possibilidades de classes
+  
+---
+# Exemplo: Nível e classe
+
+- Na planilha **choices**, escrevemos quais classes são ofertadas em cada opção de nível de ensino
+
+&lt;img src="nivel1.png"  width = "500"&gt;
+
+- Observe bem. Temos a coluna nível, as opções do tipo de nível de ensino (**ensino**) e as opções de **classe**
+
+- Até aqui, exatamente igual a como fizemos na seleção de uma opção, em casacata. O que irá mudar é o passo 2. 
+
+---
+# Exemplo: Nível e classe
+
+- No passo 2, a sintaxe é um pouco diferente. 
+
+- Observe o exemplo:
+
+&lt;img src="nivel2.png"  width = "700"&gt;
+
+- Na primeira parte do **"selected"**, temos a variável anterior, que se chama **tipo_ensino**. 
+
+- Na segunda parte da sintaxe, temos o nome da coluna que cria a dependência na aba de **choice**, que nesse caso e chama **nivel**.
+  
+---
+## Tipos de questão (type)
+
+&lt;img src="tipos.png"  width = "550"&gt;
+
+---
+## Tipos de questão (type)
+
+&lt;img src="types2.png"  width = "650"&gt;
+
+- Podemos ver mais sobre cada uma das opções de questões no site: https://xlsform.org/en/
+
+---
+
+## Tipos de questão: Metadados
+
+- Os metadados nos permitem ter informações sobre o preenchimento do questionário. A tabela abaixo mostra as questões de metadados. 
+
+&lt;img src="metadados.png"  width = "800"&gt;
+
+- Falaremos mais adiante sobre a audioria (**audit**)
+
+---
+
+## Colunas importantes
+
+- Hint: Dica
+
+- Require: Resposta obrigatória ou não. Pode ser "true" ou "false"
+
+- Constraint: Limita as repostas de acordo com alguma lógica
+
+- Constraint_message: Aviso caso a resposta esteja fora do limite definido pelo constraint
+
+---
+
+## Colunas importantes - Relevant
+
+- Relevant: Permite condicionar a pergunta a respostas anteriores. Para isso, precisamos utilizar o símbolo ${} para nos referirmos à outras variáveis. 
+
+Olhe o exemplo abaixo:
+
+&lt;img src="relevant.png"  width = "600"&gt;
+
+---
+
+## Opção: Outros, especifique
+
+A coluna relevant pode nos ajudar a criar questões que abrem para o usuário especificar o item, caso marque a opção outros. 
+
+Olhe o exemplo abaixo:
+
+&lt;img src="outros.png"  width = "600"&gt;
+
+
+---
+
+## Colunas importantes
+
+- Calculate: Permite fazer cálculos, como somas de questões, multiplicações, etc
+
+- Parameters: Especifica parâmetros, como a possibilidade de aleatorização:
+
+&lt;img src="random.png"  width = "600"&gt;
+
+
+---
+
+## Colunas importantes: Calculate
+
+- A tabela abaixo mostra como utilizar diferentes funções na coluna calculate
+
+
+&lt;img src="calc1.png"  width = "400"&gt;
+
+
+---
+
+## Colunas importantes: Calculate
+
+- Outras funções do calculate
+
+
+&lt;img src="calc2.png"  width = "600"&gt;
+
+
+---
+
+## Colunas importantes: Appearence
+
+- Appearence. Define a aparência da questão. É mais versátil na versão web-Enketo do que na versão de telemóvel Android
+
+
+&lt;img src="Appearence1.png"  width = "450"&gt;
+
+---
+## Colunas importantes: Appearence
+
+- Continuação
+
+&lt;img src="Appearence2.png"  width = "500"&gt;
+
+--- 
+
+## A auditoria
+
+- É possível auditar o preenchimento do questionário e saber quanto tempo o inquiridor passou em cada questão. 
+
+- Para isso, inserimos **audit** como tipo de questão.
+
+- Adicionalmente, se quisermos ver onde o inquiridor estava ao responder cada questão, adicionamos alguns parâmetros na coluna **parameters**
+
+- Na coluna parameters, insira: **location-priority=balanced location-min-interval=30 location-max-age=60**
+  - Esses parâmetros irão definir de quanto em quanto tempo o telemóvel irá capturar a posição de GPS. Quanto mais medidas, maior é o consumo da bateria. 
+  
+--- 
+## Como ver os dados da auditoria?
+
+- Para acessar os dados da auditori, é preciso fazer o download dos dados de mídia. 
+  - Os dados da auditoria, portanto, serão baixados junto com as fotos e os audios
+
+- No kobo, vá em **DATA/DOWNLOADS/Select export type/Media attachments** e clique em **New Exports**   
+  
+&lt;img src="Appearence2.png"  width = "500"&gt;
+
+- Após o arquivo zip ser formado, basta fazer o download. 
+
+---
+
+## Conectando projetos
+
+- Em algumas situações, pode ser interessante utilizar dados coletados em outros formulários
+
+- Por exemplo, podemos fazer uma formulário de matrícula, e depois puxar as informações do aluno ao final do ano, para preencher o rendimento e movimento do aluno. 
+
+- Há duas formas de fazer essa ligação: 
+  - De forma estática: Os dados são armazenados em um arquivo ".csv" e dali são trazidos para o outro formulário
+  - De forma dinâmica: A medida que os inquiridores vão preenchendo as informações, elas ficam disponíveis para serem acessadas no outro formulário.
+  
+
+---
+
+## Conectando projetos dinamicamente
+
+- Projeto pai: É o projeto de onde os dados irão vir. É o formuário a ser preenchido primeiro
+
+- Projeto filho: É o projeto que irá "puxar" as informações do projeto pai. 
+
+- O projeto pai nao necessita de alteraçoes
+
+- No projeto filho, você deverá inserir uma linha com uma questão do tipo **xml-external** e preencher a sintaxe de ligação
+
+- Exemplo:
+  - Ficha de matrícula (pai)
+  - Ficha de resultado no final do ano (filho)
+
+---
+## Conexão dinâmica - Ficha pai
+
+&lt;img src="pai.png"  width = "800"&gt;
+
+- Observe que é apenas um formulário comum
+
+---
+## Conexão dinâmica - Ficha filho
+
+&lt;img src="filho.png"  width = "800"&gt;
+
+---
+## Conexão dinâmica - Ficha filho
+
+- Observe alguns elementos na ficha filho:
+
+  - Na coluna type (A4) **xml-external** indica a dependência de uma planilha pai
+
+  - Nas linhas de 7 a 14, temos os elementos que vêm da planilha pai
+  
+  - Nessas linhas, a coluna **calculate** contém a referência à planilha pai
+
+---
+## Conexão dinâmica - Ficha filho
+  
+- Observe a sintaxe
+
+  - Note que há uma variável de ligação na planilha pai (**matricula**) e uma chave na planilha filho (**n_matricula_c**)
+  
+  - Ao final da sintaxe na coluna calculate, temos as variáveis que queremos puxar da planilha **pai**
+  
+---
+
+## Conexão dinâmica: Passos finais
+
+- Faltam ainda 2 passos
+
+- 1: Habilitar o compartilhamento do projeto pai
+  - Vá em **SETTINGS/Connect Projects** e habilte o botão **Enable data sharing**
+
+&lt;img src="share1.png"  width = "800"&gt;
+
+---
+## Conexão dinâmica: Passos finais
+
+- Passo 2: Habilitar a importação de dados na planilha filho
+
+  - Com a planilha filho marcada, vá em **SETTINGS/Connect Projects** e, na caixa **Import other project data**, clique **Select a different project to import data from** e escolha a planilha pai. 
+  - Clique em **import**
+  
+&lt;img src="import.png"  width = "800"&gt;
+  
+
+  
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create();
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+// add `data-at-shortcutkeys` attribute to <body> to resolve conflicts with JAWS
+// screen reader (see PR #262)
+(function(d) {
+  let res = {};
+  d.querySelectorAll('.remark-help-content table tr').forEach(tr => {
+    const t = tr.querySelector('td:nth-child(2)').innerText;
+    tr.querySelectorAll('td:first-child .key').forEach(key => {
+      const k = key.innerText;
+      if (/^[a-z]$/.test(k)) res[k] = t;  // must be a single letter (key)
+    });
+  });
+  d.body.setAttribute('data-at-shortcutkeys', JSON.stringify(res));
+})(document);
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>
