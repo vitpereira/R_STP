@@ -1,0 +1,44 @@
+---
+title: "Teste de Markdown"
+author: "Professor: Vitor Pereira"
+date: '`r format(Sys.Date(), "%d/%m/%Y")`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+---
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_duo_accent(primary_color = "#732E10", secondary_color = "#992CE2")
+
+Sys.setenv(TZ="America/Lima")
+```
+
+---
+## R Markdown
+
+This is an R Markdown presentation. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document.
+
+---
+## Slide with Bullets
+
+- Bullet 1
+- Bullet 2
+- Bullet 3
+
+---
+## Slide with R Output
+
+```{r cars, echo = TRUE}
+summary(cars)
+```
+
+---
+## Slide with Plot
+
+```{r pressure}
+plot(pressure)
+```
+
