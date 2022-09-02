@@ -81,17 +81,6 @@ crosstable(base_alunos, c(classe_f), by=c(distorcao), total="both",
            percent_pattern="{n} ({p_row})", percent_digits=0) %>%
   as_flextable()
 
-# Exercicio
-
-medias_construto <- measure_mean %>% 
-  group_by(construto) %>% 
-  summarise( media_respostas = mean(resposta, na.rm=TRUE),
-             median_repostas = median(resposta, na.rm=TRUE), 
-             median_repostas = median(resposta, na.rm=TRUE), 
-             moda_respostas  = mode(resposta),
-             desv_pad_repostas = sd(resposta, na.rm=TRUE),
-             perc_missing    = mean(is.na(resposta))
-  )
 
 ciclo <- base_alunos %>% 
   mutate(case_when(
