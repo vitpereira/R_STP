@@ -12,7 +12,7 @@ pacman:: p_load(magrittr, dplyr, vctrs, readr,
                 data.table, formattable, tidyr, crosstable)
 
 # Paths
-root     <- "C:/Users/vitor/Dropbox (Personal)/Sao Tome e Principe/2022/Boletim_estatisco/"
+root     <-  "C:/Users/Utilizador/Desktop/R_STP/"
 input    <- paste0(root, "input/")
 output   <- paste0(root, "output/")
 tmp      <- paste0(root, "tmp/")
@@ -95,3 +95,4 @@ rm(list=c("ciclo"))
 # Salva o ambiente em R
 
 save.image(file = paste0(tmp,"alunos_todos.RData"))
+saveRDS(base_alunos, file=  paste0(tmp,"alunos_todos.RData"))
