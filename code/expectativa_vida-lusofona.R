@@ -33,6 +33,6 @@ grafico_10 <- ggplot(base_paises_cplp2,
     labs(title="Expectativa de vida dos países da CPLP", 
          subtitle="De 1962 a 2007", 
          x="Ano", 
-         y="Expectativa de vida")  
+         y="Expectativa de vida")     
 
 grafico_10
