@@ -4,8 +4,10 @@
     <title>Manipulação de bases no R</title>
     <meta charset="utf-8" />
     <meta name="author" content="Professor: Vitor Pereira" />
-    <meta name="date" content="2022-02-09" />
+    <meta name="date" content="2022-12-09" />
     <script src="Aula_R_files/header-attrs-2.16/header-attrs.js"></script>
+    <link href="Aula_R_files/tabwid-1.0.0/tabwid.css" rel="stylesheet" />
+    <link href="Aula_R_files/tabwid-1.0.0/scrool.css" rel="stylesheet" />
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -19,7 +21,7 @@ class: center, middle, inverse, title-slide
 ### Professor: Vitor Pereira
 ]
 .date[
-### 02/09/2022
+### 12/09/2022
 ]
 
 ---
@@ -94,6 +96,91 @@ code     &lt;- paste0(root, "code/")
 alunos   &lt;- paste0(root, "alunos/")
 setwd(root)
 ```
+
+
+```r
+pacman:: p_load(magrittr, dplyr, vctrs, readr, ggplot2,
+                janitor, readxl, gt, epiDisplay,
+                data.table, formattable, tidyr, crosstable)
+
+# Paths
+root     &lt;-  "C:/Users/Utilizador/Desktop/R_STP/"
+input    &lt;- paste0(root, "input/")
+output   &lt;- paste0(root, "output/")
+tmp      &lt;- paste0(root, "tmp/")
+code     &lt;- paste0(root, "code/")
+alunos   &lt;- paste0(root, "alunos/")
+
+# Le todas as colunas e decide quais sao numericas
+col_types &lt;- readr::cols(.default = readr::col_character())
+
+# Acerta a hora de STP
+Sys.setenv(TZ="UCT")
+#######################################
+
+basica            &lt;- clean_names(as.data.frame(read_excel(paste0(input, "BASE BÁSICO - inicio ano 2021-2022.xlsx"), sheet = "Base Aluno")))
+secundaria_7_9    &lt;- clean_names(as.data.frame(read_excel(paste0(input,"Base Dados inicio Secundario -18-07-2022.xlsx"), sheet="Alunos 7ª- 9ª classes")))
+secundaria_10_12  &lt;- clean_names(as.data.frame(read_excel(paste0(input,"Base Dados inicio Secundario -18-07-2022.xlsx"), sheet="Alunos 10ª- 12ª Classes")))
+
+basica &lt;- basica %&gt;% # o pipe indica que estamos a ultizar a base chamada basica
+  remove_empty(c("rows", "cols")) %&gt;% #retiramos as linhas e colunas vazias
+  dplyr::select(-codigo_escola) %&gt;%  # ficamos com todas as colunas, excepto o codigo_escola
+  mutate(across(.fns = as.character)) # transformamos todas as colunas em texto
+
+secundaria_7_9 &lt;- secundaria_7_9 %&gt;% 
+  remove_empty(c("rows", "cols")) %&gt;% 
+  dplyr:: select(-codigo_escola)  %&gt;% 
+  mutate(across(.fns = as.character))
+
+secundaria_10_12 &lt;- secundaria_10_12%&gt;% 
+  remove_empty(c("rows", "cols"))  %&gt;% 
+  dplyr::select(-codigo_escola)  %&gt;% 
+  mutate(across(.fns = as.character))
+
+# Teste se as colunas sao iguais
+# all.equal(secundaria_7_9_v2,secundaria_10_12_v2,
+#          ignore_col_order=TRUE )
+
+# Append- agregacao das bases, uma base em cima da outra
+base_alunos &lt;- bind_rows(basica, secundaria_7_9, # append das bases
+                         secundaria_10_12) %&gt;%
+  mutate(distrito=replace(distrito, # corrige o distrito
+                          distrito=="LOBATA","Lobata"), 
+         classe = gsub("ª", "", classe)) # Tira o "ª" 
+
+#transforma de volta as colunas numericas para o formato de numero  
+base_alunos &lt;- readr::type_convert(base_alunos) 
+
+tab1(base_alunos$distrito)
+```
+
+```r
+tab1(base_alunos$idade)
+```
+
+```r
+tab1(base_alunos$classe)
+```
+
+```r
+base_alunos &lt;- base_alunos %&gt;% 
+  mutate(distorcao = case_when(
+    idade-classe-5 &gt;=2 ~ "Em distorção",
+    idade-classe-5 &lt; 2 ~ "Fora de distorção" )) 
+
+# Vamos retirar as bases que não vamos mais usar
+rm(list = c("basica", "col_types",
+            "secundaria_7_9", 
+            "secundaria_10_12"))
+
+tab1(base_alunos$distorcao)
+```
+
+```r
+base_alunos &lt;- base_alunos %&gt;% 
+  mutate(classe_f=factor(classe))
+```
+
 
 - Atenção: 
   - As barras são para a direita!
@@ -299,6 +386,164 @@ base_alunos &lt;- base_alunos %&gt;%
 
 ---
 
+# Substituindo o texto de uma variável
+
+- Para substituir o texto dentro de uma variável, utilizamos o comando **gsub**. 
+
+
+```r
+base_alunos &lt;- base_alunos %&gt;% 
+mutate(classe = gsub("ª", "", classe)) # Tira o "ª" 
+```
+- Notem que a variável era de texto, e quando tiramos o "ª", ela continua de texto. Se quiséssemos transfor-la em numérica, aplicar+iamos o comando **as.numeric**
+
+
+```r
+base_nova &lt;- secundaria_7_9 %&gt;% 
+  mutate(classe = gsub("ª", "", classe))%&gt;% # Tira o "ª" 
+  mutate(classe= as.numeric(classe)) # transforma em número
+```
+_ Para fazer o contrário (de numérico para texto), usamos o comando **as.character**
+
+
+---
+
+# O tipo de variável "fator" (factor)
+
+Um tipo de variável cum e bastante utilizado em análises econométricas e para formaçºao de tabelas é o factor
+
+ O r interpreta o factor como uma  variável de "camadas". 
+ 
+Observe a diferença do comando cross table quando utilizamos uma variável numérica e quando a transformamos em factor
+
+
+```r
+crosstable(base_alunos, c(classe_f), by=c(distorcao), total="both", 
+           percent_pattern="{n} ({p_row})", percent_digits=0) %&gt;%
+  as_flextable()
+```
+
+
+---
+
+# Sem o factor
+
+
+&lt;template id="e05b5c0b-de6a-4487-b397-aeebc3696872"&gt;&lt;style&gt;
+.tabwid table{
+  border-spacing:0px !important;
+  border-collapse:collapse;
+  line-height:1;
+  margin-left:auto;
+  margin-right:auto;
+  border-width: 0;
+  display: table;
+  margin-top: 1.275em;
+  margin-bottom: 1.275em;
+  border-color: transparent;
+}
+.tabwid_left table{
+  margin-left:0;
+}
+.tabwid_right table{
+  margin-right:0;
+}
+.tabwid td {
+    padding: 0;
+}
+.tabwid a {
+  text-decoration: none;
+}
+.tabwid thead {
+    background-color: transparent;
+}
+.tabwid tfoot {
+    background-color: transparent;
+}
+.tabwid table tr {
+background-color: transparent;
+}
+.katex-display {
+    margin: 0 0 !important;
+}
+&lt;/style&gt;&lt;div class="tabwid"&gt;&lt;style&gt;.cl-5d62a990{}.cl-5d5afa88{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-5d5afa9c{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-5d5b0f14{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-5d5b0f15{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-5d5b43ee{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b43f8{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b43f9{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b43fa{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4402{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4403{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4404{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b440c{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b440d{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4416{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4417{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4418{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4420{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4421{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4422{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4423{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b442a{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b442b{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b442c{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b442d{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4434{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4435{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4436{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b443e{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b443f{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4440{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4448{width:51.7pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4449{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b444a{width:78.6pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5d5b4452{width:73.1pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}&lt;/style&gt;&lt;table class='cl-5d62a990'&gt;&lt;thead&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td  rowspan="2"class="cl-5d5b443e"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;label&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  rowspan="2"class="cl-5d5b4436"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;variable&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  colspan="2"class="cl-5d5b4435"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;distorcao&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  rowspan="2"class="cl-5d5b443f"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;Total&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5d5b4440"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;Em distorção&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4449"&gt;&lt;p class="cl-5d5b0f14"&gt;&lt;span class="cl-5d5afa88"&gt;Fora de distorção&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td  rowspan="4"class="cl-5d5b43f8"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;classe&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4402"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;Min / Max&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b43ee"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;1.0 / 12.0&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b43fa"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;1.0 / 12.0&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b43f9"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;1.0 / 12.0&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5d5b440c"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;Med [IQR]&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4416"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;8.0 [6.0;10.0]&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4403"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;5.0 [3.0;8.0]&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4404"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;6.0 [3.0;8.0]&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5d5b4422"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;Mean (std)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4417"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;8.1 (2.5)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4420"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;5.4 (3.1)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4418"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;6.0 (3.2)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5d5b442d"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;N (NA)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b4423"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;14706 (0)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b442a"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;50580 (0)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5d5b442c"&gt;&lt;p class="cl-5d5b0f15"&gt;&lt;span class="cl-5d5afa9c"&gt;65286 (0)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;/template&gt;
+&lt;div class="flextable-shadow-host" id="bd1cef05-951a-4519-860c-a769fea7ff49"&gt;&lt;/div&gt;
+&lt;script&gt;
+var dest = document.getElementById("bd1cef05-951a-4519-860c-a769fea7ff49");
+var template = document.getElementById("e05b5c0b-de6a-4487-b397-aeebc3696872");
+var caption = template.content.querySelector("caption");
+if(caption) {
+  caption.style.cssText = "display:block;text-align:center;";
+  var newcapt = document.createElement("p");
+  newcapt.appendChild(caption)
+  dest.parentNode.insertBefore(newcapt, dest.previousSibling);
+}
+var fantome = dest.attachShadow({mode: 'open'});
+var templateContent = template.content;
+fantome.appendChild(templateContent);
+&lt;/script&gt;
+ 
+---
+
+# Com o factor
+
+
+&lt;template id="00174673-ed64-4b42-a052-bb3de44c7d11"&gt;&lt;style&gt;
+.tabwid table{
+  border-spacing:0px !important;
+  border-collapse:collapse;
+  line-height:1;
+  margin-left:auto;
+  margin-right:auto;
+  border-width: 0;
+  display: table;
+  margin-top: 1.275em;
+  margin-bottom: 1.275em;
+  border-color: transparent;
+}
+.tabwid_left table{
+  margin-left:0;
+}
+.tabwid_right table{
+  margin-right:0;
+}
+.tabwid td {
+    padding: 0;
+}
+.tabwid a {
+  text-decoration: none;
+}
+.tabwid thead {
+    background-color: transparent;
+}
+.tabwid tfoot {
+    background-color: transparent;
+}
+.tabwid table tr {
+background-color: transparent;
+}
+.katex-display {
+    margin: 0 0 !important;
+}
+&lt;/style&gt;&lt;div class="tabwid"&gt;&lt;style&gt;.cl-5dbc08fa{}.cl-5db4dad0{font-family:'Arial';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-5db4dada{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-5db4e9d0{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-5db4e9da{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-5db51e64{width:60.9pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e6e{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e6f{width:89.6pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e78{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e79{width:62.1pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e7a{width:60.9pt;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e82{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e83{width:62.1pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e8c{width:89.6pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e8d{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 2pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e96{width:62.1pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e97{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51e98{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 1pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51ea0{width:60.9pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51ea1{width:89.6pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1.5pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51ea2{width:60.9pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51eaa{width:62.1pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51eab{width:90.2pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51eac{width:112.8pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5db51ead{width:89.6pt;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(0, 0, 0, 1.00);border-top: 1pt solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(255, 255, 255, 0.00);border-right: 0 solid rgba(255, 255, 255, 0.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}&lt;/style&gt;&lt;table class='cl-5dbc08fa'&gt;&lt;thead&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td  rowspan="2"class="cl-5db51ea0"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;label&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  rowspan="2"class="cl-5db51e96"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;variable&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  colspan="2"class="cl-5db51e97"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;distorcao&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td  rowspan="2"class="cl-5db51ea1"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;Total&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51eab"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;Em distorção&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51eac"&gt;&lt;p class="cl-5db4e9d0"&gt;&lt;span class="cl-5db4dad0"&gt;Fora de distorção&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/thead&gt;&lt;tbody&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td  rowspan="13"class="cl-5db51e64"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;classe_f&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;91 (2%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;5195 (98%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;5286 (8%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;191 (3%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6263 (97%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6454 (10%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;3&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;162 (3%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4615 (97%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4777 (7%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;812 (11%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6525 (89%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;7337 (11%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;5&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1055 (17%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;5106 (83%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6161 (9%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1544 (24%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4843 (76%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6387 (10%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;7&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2005 (31%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4434 (69%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6439 (10%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;8&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2238 (35%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;4157 (65%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;6395 (10%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;9&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2310 (41%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;3317 (59%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;5627 (9%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;10&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1255 (36%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2203 (64%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;3458 (5%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;11&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1635 (42%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;2266 (58%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;3901 (6%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e79"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;12&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e78"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1408 (46%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6e"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;1656 (54%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e6f"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;3064 (5%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;tr style="overflow-wrap:break-word;"&gt;&lt;td class="cl-5db51e83"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;Total&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e8d"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;14706 (23%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e82"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;50580 (77%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;td class="cl-5db51e8c"&gt;&lt;p class="cl-5db4e9da"&gt;&lt;span class="cl-5db4dada"&gt;65286 (100%)&lt;/span&gt;&lt;/p&gt;&lt;/td&gt;&lt;/tr&gt;&lt;/tbody&gt;&lt;/table&gt;&lt;/div&gt;&lt;/template&gt;
+&lt;div class="flextable-shadow-host" id="32afa789-13ba-4e3a-804f-c99b07134fd7"&gt;&lt;/div&gt;
+&lt;script&gt;
+var dest = document.getElementById("32afa789-13ba-4e3a-804f-c99b07134fd7");
+var template = document.getElementById("00174673-ed64-4b42-a052-bb3de44c7d11");
+var caption = template.content.querySelector("caption");
+if(caption) {
+  caption.style.cssText = "display:block;text-align:center;";
+  var newcapt = document.createElement("p");
+  newcapt.appendChild(caption)
+  dest.parentNode.insertBefore(newcapt, dest.previousSibling);
+}
+var fantome = dest.attachShadow({mode: 'open'});
+var templateContent = template.content;
+fantome.appendChild(templateContent);
+&lt;/script&gt;
+
+---
+
 # Manipulando os dados: O dplyr
 
 - O pacote dplyr possui alguns comandos bastante importantes:
@@ -328,6 +573,91 @@ measure_mean &lt;- measure_mean %&gt;%
 
 ---
 
+# O mutate(case_when)
+
+
+- O case_when nos permite criar uma variável nome, modificando uma outra variável. 
+
+- Podemos criar categorias, intervalos, etc....
+
+- Note a sintaxe: Primeiro vem o valor antigo, e o valor que queremos criar vem depois **~**
+
+
+- Exemplo:
+
+
+```r
+ciclo &lt;- base_alunos %&gt;% 
+  mutate(case_when(
+    classe == 1 ~ "1o ciclo", 
+    classe == 2 ~ "1o ciclo", 
+    classe == 3 ~ "2o ciclo", 
+    classe == 4 ~ "2o ciclo"  ))
+```
+
+---
+
+# O mutate(case_when)
+
+- Outro exemplo: Criamos um código para cada distrito
+
+
+
+```r
+        mutate(ADM2_PCODE=
+           case_when(distrito == "R.A.Príncipe" ~ "ST0101" , 
+                     distrito == "Água Grande"  ~ "ST0201" ,
+                     distrito == "Cantagalo"    ~ "ST0202" ,
+                     distrito == "Caué"         ~ "ST0203" ,
+                     distrito == "Lembá"        ~ "ST0204" ,
+                     distrito == "Lobata"       ~ "ST0205" ,
+                     distrito == "Mé-Zochi"     ~ "ST0206")) 
+```
+
+---
+
+# O mutate(case_when)
+
+- Outro exemplo: Aqui, a variável country deve ser vazia ("") para todos os países, exceto São Tomé e Príncipe
+
+
+```r
+base_stp &lt;-base_gapminder %&gt;% 
+  mutate(pais_STP=case_when(
+    country == "Sao Tome and Principe" ~ "STP", 
+    country != "Sao Tome and Principe" ~ "" ))
+```
+
+Note que poderíamos ter alcançado o mesmo resultado com **TRUE~""**
+
+
+```r
+base_stp2 &lt;-base_paises %&gt;% 
+  mutate(pais_STP2=case_when(
+    country == "Sao Tome and Principe" ~ "STP", 
+    TRUE ~""))
+```
+
+---
+
+# Outro exemplo de mutate, com **%in%**
+
+- Nesse caso, se a variável questão possui alguns dos valores "q1", "q4", "q5", "q8", "q10", então retorna "interesse", e por aí vai
+
+
+
+```r
+measure_mean &lt;- measure_mean %&gt;% 
+  mutate( construto = case_when(
+      questao %in% c("q1", "q4", "q5", "q8", "q10") ~ "interesse" ,
+      questao %in% c("q2", "q6" , "q9") ~ "utilidade do curso", 
+      questao %in% c("q3", "q7") ~ "competencia percebida"))
+```
+
+- Note que economizamos muitas linhas com essa notação
+
+---
+
 # Exemplos- dplyr: O select
 
 - O comando select irá selecionar as colunas desejas
@@ -347,7 +677,39 @@ basica &lt;- basica %&gt;%
 
 ---
 
- 
+# Exemplos- dplyr: O filter()
+
+- O filter seleciona as linhas. 
+
+- **Não confundir com o select, que seleciona colunas!**
+
+
+```r
+base_alunos2&lt;- base_alunos %&gt;% 
+  filter(distrito=="Água Grande")  # ficamos apenas com as observaçºoes referentes a Água Grande
+```
+
+--- 
+
+# Exemplos- dplyr: O arrange()
+
+- O arrange organiza a base na ordem das variáveis que quiseres
+
+
+```r
+# Right join
+dat5 &lt;- course_data2 %&gt;% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- Nesse exemplo, o R irá ordenar a base por ordem de usuário. 
+  - Se houver duas ou mais linhas com o mesmo usuário, o R irá ordená-las pela ordem do curso.     
+    - Se houver duas ou mais linhas com o mesmo usuário e curso, o R irá ordenar as linhas pela variável "gradebook_item"      
+  
+
+
+---
+
 # O group_by e o summarise
 
 
@@ -372,11 +734,47 @@ medias_construto &lt;- measure_mean %&gt;%
     total_escolas= n_distinct(school) )
 ```
 
+---
 
+# O group_by e o summarise
+
+- Observe o exemplo abaixo. 
+- O que faz o comando **na.rm=TRUE** ?
+
+
+```r
+# Vamos fazer as medias por construto
+medias_construto &lt;- measure_mean %&gt;% 
+  group_by(construto) %&gt;%  # agrupa por construto
+  summarise( media_respostas = mean(resposta, na.rm=TRUE), # media
+             median_repostas = median(resposta, na.rm=TRUE), # mediana
+             desv_pad_repostas = sd(resposta, na.rm=TRUE), # desvio padrao
+            n_ordem = row_number()), # nuero da linha 
+            perc_missing    = mean(is.na(resposta)) # percentual de missings
+             
+             )
+```
+
+- A última linha calcula o percentual de missings. Repare que **is.na** seleciona apenas as linhas com **missings*
 
 ---
  
- ## Transformando todas as colunas em texto
+# Distinct
+
+- O comando distinct nos permite tirar os valores repetidos, seja uma linha inteira repetida, ou valores repetidos de uma variável
+
+- **distinct**, portanto, pega apenas valores distintos
+
+
+```r
+distinct(pre_survey4, usuario, curso)
+```
+
+
+---
+--- 
+ 
+  ## Transformando todas as colunas em texto
  
  - As vezes , para fazer uma junção na vertical, precisamos passar todas as colunas para texto.
  
@@ -399,7 +797,209 @@ base_alunos &lt;- bind_rows(basica, secundaria_7_9,
   base_alunos &lt;- readr::type_convert(base_alunos)
 ```
 
+---
 
+# Salvando e abrindo bases no formato R
+
+-Para salvar a base no formato R, utilzamos o comando **saveRDS**
+
+
+```r
+#save.image(file = paste0(tmp,"alunos_todos.RData"))
+saveRDS(base_alunos, file = paste0(tmp,"alunos_todos_v2.RData"))
+```
+
+-Para abrir a base, utilizamos o **readRDS**
+
+
+```r
+# Abre a base dos alunos
+base_alunos&lt;- readRDS(paste0(tmp,"alunos_todos_v2.RData"))
+```
+
+---
+
+# Unindo bases (vertical)
+
+- Para fazer a união das base na vertical, utilizamos o **bind_rows**
+- Faz a união coluna a coluna
+
+
+&lt;img src="bind_rows.png" width="200"&gt;
+
+- No stata, essa operação é chamada de "append"
+
+---
+
+# Unindo bases (vertical)
+
+
+```r
+# Append- agregacao das bases, uma base em cima da outra
+base_alunos &lt;- bind_rows(basica, 
+                         secundaria_7_9,
+                         secundaria_10_12)
+# append das bases
+```
+
+---
+--- 
+# Unindo bases (horizontal)
+
+- Para fazer a união linha a linha, na horizontal, utilizamos o comando **join**, com suas variações
+
+&lt;img src="joins.png" width="400"&gt;
+
+---
+
+# Unindo bases (horizontal)
+
+- A união mais comum e mais útil é o left join.  Ele preserva as linhas que estão na base da esquerda e elimina as linhas que apenas aparecem na base da direita
+
+
+```r
+# Left join
+dat &lt;- pre_survey4 %&gt;% 
+  left_join(course_data2, by = c("usuario", "curso"))  %&gt;% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- O inner join preserva apenas as linhas idênticas
+
+```r
+# Inner join
+dat2 &lt;- pre_survey4 %&gt;% 
+  inner_join(course_data2, by = c("usuario", "curso"))  %&gt;% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+---
+# Unindo bases (horizontal)
+
+- O full join preserva todas as linhas das duas bases
+
+
+```r
+# Full join
+dat3 &lt;- pre_survey4 %&gt;% 
+  full_join(course_data2, by = c("usuario", "curso"))  %&gt;% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- O anti join preserva apenas as linhas que **NÃO** fizeram par
+
+
+```r
+# anti_join
+dat6 &lt;- pre_survey4 %&gt;% 
+  anti_join(course_data2, by = c("usuario", "curso"))  %&gt;% 
+  arrange(usuario, curso )
+```
+
+---
+# Pivotando a base (tidyr)
+
+- Muitas vezes, precisamos colocar colunas em linhas e linhas em colunas
+
+- Podemos trocar entre os formatos wide e long
+
+&lt;img src="pivot.png" width="300"&gt;
+
+
+--- Pivot longer 
+
+- O **pivot_longer** transforma uma base em long (a original era wide)
+
+Exemplo:
+
+```r
+measure_mean &lt;- pre_survey2 %&gt;% 
+  pivot_longer(cols = q1:q10, 
+               names_to = "questao", 
+               values_to = "resposta")
+```
+
+- Nesse exemplo, temos várias colunas contendo q1, q2, q3, etc...
+- O nome das colunas será armazenado na coluna "questao"
+- O valor das colunas será armazenado na coluna "resposta"
+
+--- Pivot wider 
+
+- O pivot wider transforma uma base em wide (a original era long). 
+
+- O pivot_wider é um pouco mais complicado, pois pode aninhar linhas, inserindo vetores dentro de célular
+
+- Precisamos dizer quis colunas identificam as linhas e, ao final do código, utilizar o comando **unnest()**
+
+
+```r
+base_original &lt;- measure_mean %&gt;% 
+  pivot_wider(id_cols= c("usuario","curso"), 
+              names_from="questao", 
+              values_from="resposta")%&gt;% 
+  unnest()
+```
+
+---
+
+# Fazendo gráficos com o GGPLOT2
+
+- Primeiro, carregue o pacote ggplot2 com o pacman
+
+
+```r
+pacman:: p_load(ggplot2)
+```
+
+- Para fazer o gráfico, é importante que a base esteja preparada para ser representada em forma de gráfico
+
+
+```r
+base_graf1 &lt;- base_alunos %&gt;% 
+  mutate(idade_ideal=classe+5) %&gt;% 
+  mutate(desvio_idade= idade-idade_ideal) %&gt;% 
+  group_by(classe, distrito) %&gt;% 
+  summarise(media_desvio_idade=mean(desvio_idade)) 
+```
+
+```
+## `summarise()` has grouped output by 'classe'. You can override using the
+## `.groups` argument.
+```
+
+---
+# Graficos
+
+- Para fazer o gráfico, usamos a funçºao ggplot, e inseremos a estatica no aes(). 
+
+- Observe aqui, que estamos a dizer o que deve ficar no eixo x, no eixo y, e as cores do grafico.
+
+- Por último, damos a geometria (geom), que diz o tipo de grafico
+
+
+```r
+grafico1&lt;- base_graf1 %&gt;% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito)) +
+  geom_line()+
+  geom_point() +
+ labs(title="Desvio da idade ideal por classe")+
+ xlab("classe")
+```
+
+
+---
+
+# Graficos
+
+![](Aula_R_files/figure-html/unnamed-chunk-56-1.png)&lt;!-- --&gt;
+
+
+---
+
+#
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

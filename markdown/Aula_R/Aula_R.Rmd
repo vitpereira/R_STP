@@ -76,6 +76,81 @@ alunos   <- paste0(root, "alunos/")
 setwd(root)
 ```
 
+```{r, results='hide', warning=FALSE, message=FALSE, fig.show='hide'}
+pacman:: p_load(magrittr, dplyr, vctrs, readr, ggplot2,
+                janitor, readxl, gt, epiDisplay,
+                data.table, formattable, tidyr, crosstable)
+
+# Paths
+root     <-  "C:/Users/Utilizador/Desktop/R_STP/"
+input    <- paste0(root, "input/")
+output   <- paste0(root, "output/")
+tmp      <- paste0(root, "tmp/")
+code     <- paste0(root, "code/")
+alunos   <- paste0(root, "alunos/")
+
+# Le todas as colunas e decide quais sao numericas
+col_types <- readr::cols(.default = readr::col_character())
+
+# Acerta a hora de STP
+Sys.setenv(TZ="UCT")
+#######################################
+
+basica            <- clean_names(as.data.frame(read_excel(paste0(input, "BASE BÁSICO - inicio ano 2021-2022.xlsx"), sheet = "Base Aluno")))
+secundaria_7_9    <- clean_names(as.data.frame(read_excel(paste0(input,"Base Dados inicio Secundario -18-07-2022.xlsx"), sheet="Alunos 7ª- 9ª classes")))
+secundaria_10_12  <- clean_names(as.data.frame(read_excel(paste0(input,"Base Dados inicio Secundario -18-07-2022.xlsx"), sheet="Alunos 10ª- 12ª Classes")))
+
+basica <- basica %>% # o pipe indica que estamos a ultizar a base chamada basica
+  remove_empty(c("rows", "cols")) %>% #retiramos as linhas e colunas vazias
+  dplyr::select(-codigo_escola) %>%  # ficamos com todas as colunas, excepto o codigo_escola
+  mutate(across(.fns = as.character)) # transformamos todas as colunas em texto
+
+secundaria_7_9 <- secundaria_7_9 %>% 
+  remove_empty(c("rows", "cols")) %>% 
+  dplyr:: select(-codigo_escola)  %>% 
+  mutate(across(.fns = as.character))
+
+secundaria_10_12 <- secundaria_10_12%>% 
+  remove_empty(c("rows", "cols"))  %>% 
+  dplyr::select(-codigo_escola)  %>% 
+  mutate(across(.fns = as.character))
+
+# Teste se as colunas sao iguais
+# all.equal(secundaria_7_9_v2,secundaria_10_12_v2,
+#          ignore_col_order=TRUE )
+
+# Append- agregacao das bases, uma base em cima da outra
+base_alunos <- bind_rows(basica, secundaria_7_9, # append das bases
+                         secundaria_10_12) %>%
+  mutate(distrito=replace(distrito, # corrige o distrito
+                          distrito=="LOBATA","Lobata"), 
+         classe = gsub("ª", "", classe)) # Tira o "ª" 
+
+#transforma de volta as colunas numericas para o formato de numero  
+base_alunos <- readr::type_convert(base_alunos) 
+
+tab1(base_alunos$distrito)
+tab1(base_alunos$idade)
+tab1(base_alunos$classe)
+
+base_alunos <- base_alunos %>% 
+  mutate(distorcao = case_when(
+    idade-classe-5 >=2 ~ "Em distorção",
+    idade-classe-5 < 2 ~ "Fora de distorção" )) 
+
+# Vamos retirar as bases que não vamos mais usar
+rm(list = c("basica", "col_types",
+            "secundaria_7_9", 
+            "secundaria_10_12"))
+
+tab1(base_alunos$distorcao)
+
+base_alunos <- base_alunos %>% 
+  mutate(classe_f=factor(classe))
+
+```
+
+
 - Atenção: 
   - As barras são para a direita!
   - As vezes o cominho fica muito longo e o R não consegue ler. Nesse caso, é melhor salvar a pasta do projeto em C:\
@@ -265,6 +340,64 @@ base_alunos <- base_alunos %>%
 
 ---
 
+# Substituindo o texto de uma variável
+
+- Para substituir o texto dentro de uma variável, utilizamos o comando **gsub**. 
+
+```{r eval=FALSE}
+base_alunos <- base_alunos %>% 
+mutate(classe = gsub("ª", "", classe)) # Tira o "ª" 
+```
+- Notem que a variável era de texto, e quando tiramos o "ª", ela continua de texto. Se quiséssemos transfor-la em numérica, aplicar+iamos o comando **as.numeric**
+
+```{r eval=FALSE}
+base_nova <- secundaria_7_9 %>% 
+  mutate(classe = gsub("ª", "", classe))%>% # Tira o "ª" 
+  mutate(classe= as.numeric(classe)) # transforma em número
+
+```
+_ Para fazer o contrário (de numérico para texto), usamos o comando **as.character**
+
+
+---
+
+# O tipo de variável "fator" (factor)
+
+Um tipo de variável cum e bastante utilizado em análises econométricas e para formaçºao de tabelas é o factor
+
+ O r interpreta o factor como uma  variável de "camadas". 
+ 
+Observe a diferença do comando cross table quando utilizamos uma variável numérica e quando a transformamos em factor
+
+```{r eval=FALSE}
+crosstable(base_alunos, c(classe_f), by=c(distorcao), total="both", 
+           percent_pattern="{n} ({p_row})", percent_digits=0) %>%
+  as_flextable()
+```
+
+
+---
+
+# Sem o factor
+
+```{r echo=FALSE}
+crosstable(base_alunos, c(classe), by=c(distorcao), total="both", 
+           percent_pattern="{n} ({p_row})", percent_digits=0) %>%
+  as_flextable()
+```
+ 
+---
+
+# Com o factor
+
+```{r echo=FALSE}
+crosstable(base_alunos, c(classe_f), by=c(distorcao), total="both", 
+           percent_pattern="{n} ({p_row})", percent_digits=0) %>%
+  as_flextable()
+```
+
+---
+
 # Manipulando os dados: O dplyr
 
 - O pacote dplyr possui alguns comandos bastante importantes:
@@ -293,6 +426,87 @@ measure_mean <- measure_mean %>%
 
 ---
 
+# O mutate(case_when)
+
+
+- O case_when nos permite criar uma variável nome, modificando uma outra variável. 
+
+- Podemos criar categorias, intervalos, etc....
+
+- Note a sintaxe: Primeiro vem o valor antigo, e o valor que queremos criar vem depois **~**
+
+
+- Exemplo:
+
+```{r eval=FALSE}
+ciclo <- base_alunos %>% 
+  mutate(case_when(
+    classe == 1 ~ "1o ciclo", 
+    classe == 2 ~ "1o ciclo", 
+    classe == 3 ~ "2o ciclo", 
+    classe == 4 ~ "2o ciclo"  ))
+
+```
+
+---
+
+# O mutate(case_when)
+
+- Outro exemplo: Criamos um código para cada distrito
+
+
+```{r eval=FALSE}
+        mutate(ADM2_PCODE=
+           case_when(distrito == "R.A.Príncipe" ~ "ST0101" , 
+                     distrito == "Água Grande"  ~ "ST0201" ,
+                     distrito == "Cantagalo"    ~ "ST0202" ,
+                     distrito == "Caué"         ~ "ST0203" ,
+                     distrito == "Lembá"        ~ "ST0204" ,
+                     distrito == "Lobata"       ~ "ST0205" ,
+                     distrito == "Mé-Zochi"     ~ "ST0206")) 
+```
+
+---
+
+# O mutate(case_when)
+
+- Outro exemplo: Aqui, a variável country deve ser vazia ("") para todos os países, exceto São Tomé e Príncipe
+
+```{r eval=FALSE}
+base_stp <-base_gapminder %>% 
+  mutate(pais_STP=case_when(
+    country == "Sao Tome and Principe" ~ "STP", 
+    country != "Sao Tome and Principe" ~ "" ))
+```
+
+Note que poderíamos ter alcançado o mesmo resultado com **TRUE~""**
+
+```{r eval=FALSE}
+base_stp2 <-base_paises %>% 
+  mutate(pais_STP2=case_when(
+    country == "Sao Tome and Principe" ~ "STP", 
+    TRUE ~""))
+```
+
+---
+
+# Outro exemplo de mutate, com **%in%**
+
+- Nesse caso, se a variável questão possui alguns dos valores "q1", "q4", "q5", "q8", "q10", então retorna "interesse", e por aí vai
+
+
+```{r eval=FALSE}
+measure_mean <- measure_mean %>% 
+  mutate( construto = case_when(
+      questao %in% c("q1", "q4", "q5", "q8", "q10") ~ "interesse" ,
+      questao %in% c("q2", "q6" , "q9") ~ "utilidade do curso", 
+      questao %in% c("q3", "q7") ~ "competencia percebida"))
+```
+
+- Note que economizamos muitas linhas com essa notação
+
+---
+
 # Exemplos- dplyr: O select
 
 - O comando select irá selecionar as colunas desejas
@@ -310,7 +524,38 @@ basica <- basica %>%
 
 ---
 
- 
+# Exemplos- dplyr: O filter()
+
+- O filter seleciona as linhas. 
+
+- **Não confundir com o select, que seleciona colunas!**
+
+```{r eval=FALSE}
+base_alunos2<- base_alunos %>% 
+  filter(distrito=="Água Grande")  # ficamos apenas com as observaçºoes referentes a Água Grande
+
+```
+
+--- 
+
+# Exemplos- dplyr: O arrange()
+
+- O arrange organiza a base na ordem das variáveis que quiseres
+
+```{r eval=FALSE}
+# Right join
+dat5 <- course_data2 %>% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- Nesse exemplo, o R irá ordenar a base por ordem de usuário. 
+  - Se houver duas ou mais linhas com o mesmo usuário, o R irá ordená-las pela ordem do curso.     
+    - Se houver duas ou mais linhas com o mesmo usuário e curso, o R irá ordenar as linhas pela variável "gradebook_item"      
+  
+
+
+---
+
 # O group_by e o summarise
 
 
@@ -334,11 +579,45 @@ medias_construto <- measure_mean %>%
     total_escolas= n_distinct(school) )
 ```
 
+---
 
+# O group_by e o summarise
+
+- Observe o exemplo abaixo. 
+- O que faz o comando **na.rm=TRUE** ?
+
+```{r eval=FALSE}
+# Vamos fazer as medias por construto
+medias_construto <- measure_mean %>% 
+  group_by(construto) %>%  # agrupa por construto
+  summarise( media_respostas = mean(resposta, na.rm=TRUE), # media
+             median_repostas = median(resposta, na.rm=TRUE), # mediana
+             desv_pad_repostas = sd(resposta, na.rm=TRUE), # desvio padrao
+            n_ordem = row_number()), # nuero da linha 
+            perc_missing    = mean(is.na(resposta)) # percentual de missings
+             
+             )
+```
+
+- A última linha calcula o percentual de missings. Repare que **is.na** seleciona apenas as linhas com **missings*
 
 ---
  
- ## Transformando todas as colunas em texto
+# Distinct
+
+- O comando distinct nos permite tirar os valores repetidos, seja uma linha inteira repetida, ou valores repetidos de uma variável
+
+- **distinct**, portanto, pega apenas valores distintos
+
+```{r eval=FALSE}
+distinct(pre_survey4, usuario, curso)
+```
+
+
+---
+--- 
+ 
+  ## Transformando todas as colunas em texto
  
  - As vezes , para fazer uma junção na vertical, precisamos passar todas as colunas para texto.
  
@@ -359,4 +638,204 @@ base_alunos <- bind_rows(basica, secundaria_7_9,
   base_alunos <- readr::type_convert(base_alunos)
 ```
 
+---
 
+# Salvando e abrindo bases no formato R
+
+-Para salvar a base no formato R, utilzamos o comando **saveRDS**
+
+```{r eval=FALSE}
+#save.image(file = paste0(tmp,"alunos_todos.RData"))
+saveRDS(base_alunos, file = paste0(tmp,"alunos_todos_v2.RData"))
+```
+
+-Para abrir a base, utilizamos o **readRDS**
+
+```{r eval=FALSE}
+# Abre a base dos alunos
+base_alunos<- readRDS(paste0(tmp,"alunos_todos_v2.RData"))
+```
+
+---
+
+# Unindo bases (vertical)
+
+- Para fazer a união das base na vertical, utilizamos o **bind_rows**
+- Faz a união coluna a coluna
+
+
+<img src="bind_rows.png" width="200">
+
+- No stata, essa operação é chamada de "append"
+
+---
+
+# Unindo bases (vertical)
+
+```{r eval=FALSE}
+
+# Append- agregacao das bases, uma base em cima da outra
+base_alunos <- bind_rows(basica, 
+                         secundaria_7_9,
+                         secundaria_10_12)
+# append das bases
+ 
+```
+
+---
+--- 
+# Unindo bases (horizontal)
+
+- Para fazer a união linha a linha, na horizontal, utilizamos o comando **join**, com suas variações
+
+<img src="joins.png" width="400">
+
+---
+
+# Unindo bases (horizontal)
+
+- A união mais comum e mais útil é o left join.  Ele preserva as linhas que estão na base da esquerda e elimina as linhas que apenas aparecem na base da direita
+
+```{r eval=FALSE}
+# Left join
+dat <- pre_survey4 %>% 
+  left_join(course_data2, by = c("usuario", "curso"))  %>% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- O inner join preserva apenas as linhas idênticas
+```{r eval=FALSE}
+# Inner join
+dat2 <- pre_survey4 %>% 
+  inner_join(course_data2, by = c("usuario", "curso"))  %>% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+---
+# Unindo bases (horizontal)
+
+- O full join preserva todas as linhas das duas bases
+
+```{r eval=FALSE}
+# Full join
+dat3 <- pre_survey4 %>% 
+  full_join(course_data2, by = c("usuario", "curso"))  %>% 
+  arrange(usuario, curso, gradebook_item)
+```
+
+- O anti join preserva apenas as linhas que **NÃO** fizeram par
+
+```{r eval=FALSE}
+# anti_join
+dat6 <- pre_survey4 %>% 
+  anti_join(course_data2, by = c("usuario", "curso"))  %>% 
+  arrange(usuario, curso )
+```
+
+---
+# Pivotando a base (tidyr)
+
+- Muitas vezes, precisamos colocar colunas em linhas e linhas em colunas
+
+- Podemos trocar entre os formatos wide e long
+
+<img src="pivot.png" width="300">
+
+
+--- Pivot longer 
+
+- O **pivot_longer** transforma uma base em long (a original era wide)
+
+Exemplo:
+```{r eval=FALSE}
+
+measure_mean <- pre_survey2 %>% 
+  pivot_longer(cols = q1:q10, 
+               names_to = "questao", 
+               values_to = "resposta")
+```
+
+- Nesse exemplo, temos várias colunas contendo q1, q2, q3, etc...
+- O nome das colunas será armazenado na coluna "questao"
+- O valor das colunas será armazenado na coluna "resposta"
+
+--- Pivot wider 
+
+- O pivot wider transforma uma base em wide (a original era long). 
+
+- O pivot_wider é um pouco mais complicado, pois pode aninhar linhas, inserindo vetores dentro de célular
+
+- Precisamos dizer quis colunas identificam as linhas e, ao final do código, utilizar o comando **unnest()**
+
+```{r eval=FALSE}
+base_original <- measure_mean %>% 
+  pivot_wider(id_cols= c("usuario","curso"), 
+              names_from="questao", 
+              values_from="resposta")%>% 
+  unnest()
+```
+
+---
+
+# Fazendo gráficos com o GGPLOT2
+
+- Primeiro, carregue o pacote ggplot2 com o pacman
+
+```{r eval=FALSE}
+pacman:: p_load(ggplot2)
+```
+
+- Para fazer o gráfico, é importante que a base esteja preparada para ser representada em forma de gráfico
+
+```{r, results='hide' }
+base_graf1 <- base_alunos %>% 
+  mutate(idade_ideal=classe+5) %>% 
+  mutate(desvio_idade= idade-idade_ideal) %>% 
+  group_by(classe, distrito) %>% 
+  summarise(media_desvio_idade=mean(desvio_idade)) 
+```
+
+---
+# Graficos
+
+- Para fazer o gráfico, usamos a funçºao ggplot, e inseremos a estatica no aes(). 
+
+- Observe aqui, que estamos a dizer o que deve ficar no eixo x, no eixo y, e as cores do grafico.
+
+- Por último, damos a geometria (geom), que diz o tipo de grafico
+
+```{r eval=FALSE}
+grafico1<- base_graf1 %>% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito)) +
+  geom_line()+
+  geom_point() +
+ labs(title="Desvio da idade ideal por classe")+
+ xlab("classe")
+```
+
+
+---
+
+# Graficos
+
+```{r, echo=FALSE, , fig.width=10, fig.height=6}
+grafico1<- base_graf1 %>% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito)) +
+  geom_line()+
+  geom_point() +
+ labs(title="Desvio da idade ideal por classe")+
+ xlab("classe")
+
+grafico1
+```
+
+
+---
+
+#
