@@ -8,10 +8,13 @@ output:
 ---
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
+
 library(xaringanthemer)
-style_duo_accent(primary_color = "#116116", secondary_color = "#03A696")
+style_duo_accent(primary_color = "#116116", secondary_color = "#C62C2C")
 
 Sys.setenv(TZ="America/Lima")
+
+knitr::opts_chunk$set(warning = FALSE, message = FALSE) 
 ```
 
 
@@ -30,7 +33,7 @@ rm(list=ls()) # apaga tudo no ambiente
 install.packages("devtools")
 ```
 
-  - Outros pacotes armazenaos no github precisam do Devtools::
+  - Outros pacotes armazenados no github precisam do Devtools::
 ```{r eval=FALSE}
 devtools:: install_github("data-edu/dataedu")
 ```
@@ -77,8 +80,8 @@ setwd(root)
 ```
 
 ```{r, results='hide', warning=FALSE, message=FALSE, fig.show='hide'}
-pacman:: p_load(magrittr, dplyr, vctrs, readr, ggplot2,
-                janitor, readxl, gt, epiDisplay,
+pacman:: p_load(magrittr, dplyr, vctrs, readr, ggplot2, sf,
+                janitor, readxl, gt, epiDisplay, gapminder,
                 data.table, formattable, tidyr, crosstable)
 
 # Paths
@@ -536,6 +539,8 @@ base_alunos2<- base_alunos %>%
 
 ```
 
+
+---
 --- 
 
 # Exemplos- dplyr: O arrange()
@@ -543,7 +548,6 @@ base_alunos2<- base_alunos %>%
 - O arrange organiza a base na ordem das variáveis que quiseres
 
 ```{r eval=FALSE}
-# Right join
 dat5 <- course_data2 %>% 
   arrange(usuario, curso, gradebook_item)
 ```
@@ -821,7 +825,7 @@ grafico1<- base_graf1 %>%
 
 # Graficos
 
-```{r, echo=FALSE, , fig.width=10, fig.height=6}
+```{r, echo=FALSE, warning=FALSE, message=FALSE,  fig.width=10, fig.height=6}
 grafico1<- base_graf1 %>% 
   ggplot(aes(
     x=classe, 
@@ -830,12 +834,638 @@ grafico1<- base_graf1 %>%
   geom_line()+
   geom_point() +
  labs(title="Desvio da idade ideal por classe")+
- xlab("classe")
-
+ xlab("classe") + ylab("Desvio da idade em relação à idade correta para a classe") +
+  scale_x_continuous(breaks = seq(1,12, 1))
 grafico1
 ```
 
 
 ---
 
-#
+# Explicando: Como fizemos o gráfico?
+
+- 1 - A base precisa estar formatada para o gráfico
+
+- 2 - Recebemos a base, e depois da **pipe (%>%)**, abrimos a sintaxe do ggplot.
+
+  - Nesse momento, precisamos dar a est+etica do gráfico (**aes**). A estética nos diz qual é o eixo x, o eixo y, as cores, etc...) 
+    
+```{r eval=FALSE}
+grafico1<- base_graf1 %>% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito))
+```
+
+
+---
+
+# Como fizemos o gráfico? A geometria
+
+- Depois precismos dizer o tipo (geometria) do gráfico. Isso é feito, nesse caso, através do **geom_line()**.
+
+- Podemos sobrepor diferentes geometrias. Por exemplo, podemos colocar pontos: **geom_point**
+
+- Para ir adicionando camadas, utilizamos o símbolo da soma **+**
+
+
+```{r eval=FALSE}
+grafico1<- base_graf1 %>% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito)) +
+  geom_line()+
+  geom_point() 
+```
+
+---
+
+# Como fizemos o gráfico? Detalhes
+
+- Por último, adicionamos os últimos detalhes, como:
+
+  - Título
+  - Nome do eixo X e do eixo Y
+  - A escala do eixo X e os pontos de quebra (break points) do eixo x 
+
+```{r eval=FALSE}
+grafico1<- base_graf1 %>% 
+  ggplot(aes(
+    x=classe, 
+    y=media_desvio_idade, 
+    color=distrito)) +
+  geom_line()+
+  geom_point() +
+ labs(title="Desvio da idade ideal por classe")+
+ xlab("classe") + ylab("Desvio da idade em relaçºao à idade correta para a classe") +
+  scale_x_continuous(breaks = seq(1,12, 1))
+```
+
+---
+
+# Tipos de geometria
+
+- Linha: **geom_line**
+- Ponto: **geom_point**
+- Barra: **geom_bar**
+- Boxpot: **geom_boxplot**
+- Histograma: **geom_histogram**
+- Violino: **geom_violin** 
+- Estima relação entre variáveis: **geom_smooth**
+- Montanhas empilhadas: **geom_density_ridges**  (precisa instalar o pacote **ggridges**)
+
+- O copito doo ggplot2 contém dicas das geometrias mais comuns
+  - [Clique aqui para baixar o copito do ggplot2 !](https://raw.githubusercontent.com/rstudio/cheatsheets/main/translations/portuguese/data-visualization_pt.pdf)
+
+
+
+---
+
+# Pirâmide etária nas escolas de STP
+
+- Primeiro vamos organizar a base
+
+```{r , warning=FALSE, message=FALSE}
+# Abre a base dos alunos
+base_piramide <- base_alunos %>% 
+  group_by(sexo, idade) %>% 
+  summarise(contagem_alunos = n()) %>% 
+  mutate(contagem_alunos= 
+           replace(contagem_alunos, 
+                   sexo=="F", (-1)* contagem_alunos)) %>% 
+  arrange(idade, sexo)
+```
+
+- Observe o replace.... Invertemos a contagem do número de meninas multiplcando por -1. Assim, as barras das meninas ficarão para a esquerda, e a dos meninos para a direita.
+
+---
+
+# Pirâmide etária nas escolas de STP
+
+- Agora ao grafico
+
+```{r  eval=FALSE}
+
+grafico_piramide <- ggplot(base_piramide, 
+                    aes(x= idade, 
+                     y= contagem_alunos, 
+                     fill= sexo)) +
+  geom_bar(data=subset(base_piramide, sexo=="M"),
+           stat="identity")+
+  geom_bar(data=subset(base_piramide, sexo=="F"),
+           stat="identity") +
+  scale_y_continuous(breaks = seq(-3000, 3000, 1000), 
+                   labels = abs(seq(-3000, 3000, 1000)), 
+                   "Quantidade de alunos") +
+  coord_flip() +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw()
+
+grafico_piramide 
+```
+
+---
+
+# Pirâmide etária nas escolas de STP
+
+
+```{r, echo=FALSE, fig.width=10, fig.height=6}
+
+grafico_piramide <- ggplot(base_piramide, 
+                    aes(x= idade, 
+                     y= contagem_alunos, 
+                     fill= sexo)) +
+  geom_bar(data=subset(base_piramide, sexo=="M"),
+           stat="identity")+
+  geom_bar(data=subset(base_piramide, sexo=="F"),
+           stat="identity") +
+  scale_y_continuous(breaks = seq(-3000, 3000, 1000), 
+                   labels = abs(seq(-3000, 3000, 1000)), 
+                   "Quantidade de alunos") +
+  coord_flip() +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw()
+
+grafico_piramide 
+```
+
+---
+# Explicando o código
+
+- Em geom_bar, aplicamos a barra somente aos meninos. Para isso , utilizamos o comando  **data=subset()**
+
+- Fizemos o mesmo para as meninas
+
+- O **stat="identity"** é padrão para gráficos de barra
+
+- Em **scale_y_continuous**, inserimos os breakpoints, os labels e o título do eixo y
+
+- Depois invertemos os eixos! Note que o título do eixo y agora foi para o eixo x! Fizemos isso com o **coord_flip()**
+
+- Por último, colocamos o padrão de cores (**scale_fill_brewer(palette="Set2")**)  e alteramos a aparência geral (**theme_bw()**)
+
+
+---
+#Total de alunos por distrito
+
+```{r  eval=FALSE}
+# Grafico de quantidade de alunos por distrito
+base_distritos <- base_alunos %>% 
+  group_by(distrito) %>% 
+  summarise(contagem_alunos = n()) 
+
+grafico_distritos <- ggplot(base_distritos, 
+                     aes(x= distrito, 
+                     y= contagem_alunos, 
+                    label = contagem_alunos)) +
+  geom_bar(stat="identity", fill="#275C38") +
+  geom_text(color= "white", size = 6, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  theme_bw()
+
+grafico_distritos
+
+```
+
+
+---
+#Total de alunos por distrito
+
+```{r ,echo=FALSE, fig.width=10, fig.height=6}
+# Grafico de quantidade de alunos por distrito
+base_distritos <- base_alunos %>% 
+  group_by(distrito) %>% 
+  summarise(contagem_alunos = n()) 
+
+grafico_distritos <- ggplot(base_distritos, 
+                     aes(x= distrito, 
+                     y= contagem_alunos, 
+                    label = contagem_alunos)) +
+  geom_bar(stat="identity", fill="#275C38") +
+  geom_text(color= "white", size = 6, position = position_stack(vjust = 0.5)) +
+  coord_flip() +
+  theme_bw()
+
+grafico_distritos
+
+```
+
+---
+
+# Expectativa de vida nos países
+
+```{r ,echo=FALSE, fig.width=10, fig.height=6}
+base_paises <- gapminder %>% 
+  filter(year==2007) %>% 
+  mutate(STP=case_when(
+    country=="Sao Tome and Principe" ~ "STP", 
+    TRUE~""))
+
+graf_paises <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point(alpha=1/3) +
+  geom_text(aes(label=STP))+
+  theme(legend.position = "None")
+
+graf_paises
+
+```
+---
+
+
+# Expectativa de vida nos países
+
+```{r, eval=FALSE}
+base_paises <- gapminder %>% 
+  filter(year==2007) %>% 
+  mutate(STP=case_when(
+    country=="Sao Tome and Principe" ~ "STP", 
+    TRUE~""))
+
+graf_paises <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point() +
+  geom_text(aes(label=STP))+
+  theme(legend.position = "None")
+
+graf_paises
+
+```
+
+---
+
+# Expectativa de vida nos países
+
+```{r ,echo=FALSE, fig.width=10, fig.height=6}
+graf_paises2 <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point(alpha=1/3) +
+  geom_text(aes(label=STP, 
+                size=30, 
+                colour="black"))+
+  theme(legend.position = "None") +
+  scale_size_continuous(range=c(3,20))
+  
+graf_paises2
+
+```
+
+---
+
+
+# Expectativa de vida nos países
+
+- Alteramos o tamanho das bolas
+
+```{r , eval=FALSE}
+graf_paises2 <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point(alpha=1/3) +
+  geom_text(aes(label=STP, 
+                size=30, 
+                colour="black"))+
+  theme(legend.position = "None") +
+  scale_size_continuous(range=c(3,20))
+  
+graf_paises2
+
+```
+
+---
+
+# Expectativa de vida nos países
+
+```{r ,echo=FALSE, fig.width=10, fig.height=6}
+graf_paises3 <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point(alpha=1/3) +
+  geom_text(aes(label=STP, 
+                size=30, 
+                colour="black"))+
+  theme(legend.position = "None") +
+  scale_size_continuous(range=c(3,20)) +
+  scale_x_log10()
+  
+graf_paises3
+
+```
+
+---
+
+# Expectativa de vida nos países
+
+- Adicionamos a escala logarítmica
+
+```{r , eval = FALSE}
+graf_paises3 <- base_paises %>% 
+  ggplot(aes(
+    x=gdpPercap, 
+    y=lifeExp, 
+    color=continent, 
+    size=pop)) +
+  geom_point(alpha=1/3) +
+  geom_text(aes(label=STP, 
+                size=30, 
+                colour="black"))+
+  theme(legend.position = "None") +
+  scale_size_continuous(range=c(3,20)) +
+  scale_x_log10()
+  
+graf_paises3
+
+```
+
+---
+
+# Fazendo mapas com ggplot2 e sf
+
+- Para fazer um mapa, preciosamos de um shapefile
+
+- Precisamos também do pacote **sf**
+
+- É fácil achar shapefiles de países, estados, províncias, municípios e distritos na internet
+
+- Precisamos carregar a base de shapefile e fazer a ligação com a base de dados, que já precisa estar formatada corretamente
+
+---
+
+# Preparando a base para o mapa
+
+- Utilizamos o comando **st_read()** para ler o shapefile 
+
+```{r , eval = FALSE}
+# Abre a base dos alunos
+base_alunos<- readRDS(paste0(tmp,"alunos_todos.RData"))
+
+# Abre o shapefile
+maps_STP <- st_read(paste0(input,"shapes/stp_admbnda_adm2_gadm_2020.shp" ))
+
+```
+
+
+---
+# Preparando a base para o mapa
+
+- A base de dados precisa estar n mesmo nível das divisões do shapefile
+
+- No caso, precisamos que ela esteja no nível do distrito
+
+- Aqui, queremos calcular o número de alunos por turma. 
+
+  - Primeiro agrupamos na turma, que na verdade é a combinação de escola, classe, turma, período, regime e área
+
+```{r , eval = FALSE}
+# Base escolar no nivel do distrito
+base_distrito1 <- base_alunos %>%
+  mutate(idade_5a  = ifelse(classe == 5, idade, NA),
+         idade_8a  = ifelse(classe == 8, idade, NA),
+         idade_11a = ifelse(classe ==11, idade, NA)) %>% 
+  group_by(distrito, nome_da_escola, classe, turma, 
+           periodo, regime, 
+           area_de_estudo_10a_a_12a_classe)
+```
+
+---
+# Preparando a base para o mapa
+
+- Agora calculamos o total de alunos na turma, e a média de idade dos alunos nas turmas de 5a, 8a e 11a classe
+
+```{r , eval = FALSE}
+
+base_distrito2 <- base-distrito1 %>% 
+  summarise(alunos_turma=n(), 
+            media_idade_5a_turma=mean(idade_5a,na.rm=TRUE), 
+            media_idade_8a_turma=mean(idade_8a,na.rm=TRUE), 
+            media_idade_11a_turma=mean(idade_11a,na.rm=TRUE))
+```            
+            
+---
+# Preparando a base para o mapa
+
+- Uma vez calculada a média de idade por turma e o total de alunos por cada turma, agrupamos por distrito para tirar as médias por distrito
+
+```{r , eval = FALSE}
+
+base_distrito3 <- base_distrito2 %>% 
+  group_by(distrito) %>% 
+  summarise(total_alunos = n(), 
+     media_alunos_turma  = mean(alunos_turma,na.rm = TRUE),
+     media_idade_5a_dis  = weighted.mean(media_idade_5a_turma,alunos_turma,na.rm = TRUE ), 
+            media_idade_8a_dis  = weighted.mean(media_idade_8a_turma,alunos_turma,na.rm = TRUE ), 
+            media_idade_11a_dis = weighted.mean(media_idade_11a_turma,alunos_turma,na.rm = TRUE )) 
+
+```
+
+- Note que tiramos a média de idade dos alunos **PONDERADA** pelo tamanho das turmas. Por que?
+
+  - Porque se tirássemos a média simples, as turmas pequenas entrariam com um peso desproporcional! Para que as turmas maiores tenham um peso maior, precisamos ponderar a média. 
+
+---
+
+# Preparando a base para o mapa
+
+- Para fazer o join/"merge" horizontal, precisamos que as chaves das linhas sejam únicas. Caso contrário, as linhas não serão ligadas.
+
+
+```{r , eval = FALSE}
+
+base_distrito4 <- base_distrito3 %>%  
+        mutate(ADM2_PCODE=
+           case_when(distrito == "R.A.Príncipe" ~ "ST0101" , 
+                     distrito == "Água Grande"  ~ "ST0201" ,
+                     distrito == "Cantagalo"    ~ "ST0202" ,
+                     distrito == "Caué"         ~ "ST0203" ,
+                     distrito == "Lembá"        ~ "ST0204" ,
+                     distrito == "Lobata"       ~ "ST0205" ,
+                     distrito == "Mé-Zochi"     ~ "ST0206")) %>% 
+  left_join(maps_STP, by="ADM2_PCODE"))
+
+```
+
+- Finalmente, fazemos o **left_join**
+
+- No último passo, precisamos aplicar a função **st_as_sf**
+
+```{r , eval = FALSE}
+base_distrito <- st_as_sf(base_distrito4)
+```
+
+---
+
+# Agora, o mapa!
+
+```{r , eval = FALSE}
+# Mapa!!!!
+mapa_alunos <- ggplot(base_distrito) +
+  geom_sf(aes(fill=total_alunos), alpha=0.8, col="black") +
+  scale_fill_viridis_c(option="magma", direction=-1) +
+  labs( title = " Total de alunos por distrito") 
+
+ggsave("mapa_alunos.png", plot=mapa_alunos)
+```
+
+---
+
+# Mapa: Alunos por distrito
+
+```{r, results='hide', echo=FALSE}
+# Abre a base dos alunos
+base_alunos<- readRDS(paste0(tmp,"alunos_todos.RData"))
+
+maps_STP <- st_read(paste0(input,"shapes/stp_admbnda_adm2_gadm_2020.shp" ))
+
+# Base escolar no nivel do distrito
+base_distrito <- st_as_sf(base_alunos %>%
+  mutate(idade_5a  = ifelse(classe == 5, idade, NA),
+         idade_8a  = ifelse(classe == 8, idade, NA),
+         idade_11a = ifelse(classe ==11, idade, NA)) %>% 
+  group_by(distrito, nome_da_escola, classe, turma, 
+           periodo, regime, 
+           area_de_estudo_10a_a_12a_classe) %>% 
+  summarise(alunos_turma=n(), 
+            media_idade_5a_turma=mean(idade_5a,na.rm=TRUE), 
+            media_idade_8a_turma=mean(idade_8a,na.rm=TRUE), 
+            media_idade_11a_turma=mean(idade_11a,na.rm=TRUE)) %>% 
+      group_by(distrito) %>% 
+  summarise(total_alunos = n(), 
+            media_alunos_turma  = mean(alunos_turma,na.rm = TRUE),
+            media_idade_5a_dis  = weighted.mean(media_idade_5a_turma,alunos_turma,na.rm = TRUE ), 
+            media_idade_8a_dis  = weighted.mean(media_idade_8a_turma,alunos_turma,na.rm = TRUE ), 
+            media_idade_11a_dis = weighted.mean(media_idade_11a_turma,alunos_turma,na.rm = TRUE )) %>% 
+        mutate(ADM2_PCODE=
+           case_when(distrito == "R.A.Príncipe" ~ "ST0101" , 
+                     distrito == "Água Grande"  ~ "ST0201" ,
+                     distrito == "Cantagalo"    ~ "ST0202" ,
+                     distrito == "Caué"         ~ "ST0203" ,
+                     distrito == "Lembá"        ~ "ST0204" ,
+                     distrito == "Lobata"       ~ "ST0205" ,
+                     distrito == "Mé-Zochi"     ~ "ST0206")) %>% 
+  left_join(maps_STP, by="ADM2_PCODE"))
+
+# Mapa!!!!
+mapa_alunos <- ggplot(base_distrito) +
+  geom_sf(aes(fill=total_alunos), alpha=0.8, col="black") +
+  scale_fill_viridis_c(option="magma", direction=-1) +
+  labs( title = " Total de alunos por distrito") 
+
+ggsave("mapa_alunos.png", plot=mapa_alunos)
+
+mapa_5a_classe<- ggplot(base_distrito) +
+  geom_sf(aes(fill=media_idade_5a_dis), alpha=0.8, col="black") +
+  scale_fill_viridis_c(option="magma", direction=-1) +
+  labs( title = "Média de idade dos alunos", 
+        subtitle= "5a classe")
+
+ggsave("mapa_5a.png", plot=mapa_5a_classe)
+
+
+```
+
+<img src= "mapa_alunos.png", width=500>
+
+---
+
+# Idade na 5a classe, por distrito
+
+
+<img src= "mapa_5a.png", width=500>
+
+---
+
+# O RMarkdown
+
+- O RMarkdown nos permite fazer documentos e apresentações que tomam como resultado gráficos e tabelas produzidos pelo R
+
+- O Markdown permite inserir pedaços de códigos no documento e rodá-los quando compilamos o código de markdown
+
+
+---
+
+# O cabeçalho do RMarkdown
+
+- A parte mais importante do Markdown (YALM)
+
+- O cabeçalho modifica o tipo de documento
+  - Apresentação
+  - Documento em HTML
+  - Documento em pdf
+  - Documento em word
+  - Livro
+  - Etc...
+
+- É no cabeçalho que também inserimos os autores do documento, data e o estilo do documento
+
+---
+
+# Nosso cabeçalho
+
+- Este é o cabeçalho deste documento
+
+```{r , eval = FALSE}
+---
+title: "Manipulação de bases no R"
+author: "Professor: Vitor Pereira"
+date: '`r format(Sys.Date(), "%d/%m/%Y")`'
+output:
+  xaringan::moon_reader:
+    css: xaringan-themer.css
+---
+```
+  
+- Aqui estamos a utilizar a apresentação em **xaringan** ( é um pacote e precisa ser instalado), que é mais bonita do que a apresentação defaut do RMarkdown
+
+---
+
+# O primeiro chunk
+
+- **chunk**s são os pedaços de código incluidos dentro do código de Markdown
+
+  - Os **chunk**s estão sempre delimitados por 3 aspas simples
+  
+  - Deve se colocar as 3 aspas no início e final do chunk 
+  
+<img src= "chunk1.png", width=600>
+
+- Aqui podemos mudar todo o estilo da nossa apresentação, incluindo as cores do slide
+
+---
+
+# Os chunks
+
+- Na primeira linha do chunk, dizemos se queremos mostrar o código, mostrar o output e as mensagens de erro
+
+Exemplos:
+
+-  "**{r}**" : Executa, mostra o código e o output
+
+-  "**{r,  eval=FALSE}**" Não executa, mas mostra o código
+
+-  "**{r, results='hide', echo=FALSE}**" Executa, mas não mostra o código nem o output
+
+-  "**{r, echo=FALSE, warning=FALSE, message=FALSE}**" Executa, mostra o output, mas não mostra mensagens
+
+-  "**{r ,echo=FALSE, fig.width=10, fig.height=6}**" Executa, mostra o output e dá as dimensões do gráfico
+
+  
