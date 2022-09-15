@@ -1393,6 +1393,47 @@ ggsave("mapa_5a.png", plot=mapa_5a_classe)
 <img src= "mapa_5a.png", width=500>
 
 ---
+# Trabalhando com Funções
+
+- Para trabalhar com funções, iremos utilizar o pacote **purrr**, e a função **map**. Ele faz parte do **tidyverse** 
+
+- Primeiro criamos a função
+
+
+```{r, eval=FALSE}
+tabela_distrito <- function(x){
+  
+  y <-base_alunos %>% 
+    filter(distrito==x)
+
+print(x)  
+  
+crosstable(y, c(classe_f), by=c(distorcao), total="both", percent_pattern="{n} ({p_row})", percent_digits=0) %>% as_flextable()
+}
+```
+
+- Observe a função. Ela pega um elemento **x**, filtra a base por **x**, depois imprime **x**, e por último forma uma tabela 
+
+---
+# Trabalhando com Funções
+
+- No segundo passo, precisamos apenas de um vetor, e mapear a função ao vetor. 
+
+- O comando **map** funciona da seguinte forma:
+  - **map(vetor, função)**
+
+- Escrevemos então o vetor de distritos, e associamos a função à esse vetor
+
+```{r, eval=FALSE}
+
+vetor_distritos = c("Água Grande", "Cantagalo", "Caué", "Lembá",
+                    "Lobata", "Mé-Zochi", "R.A.Príncipe")
+
+map(vetor_distritos, tabela_distrito)
+
+```
+
+---
 
 # O RMarkdown
 

@@ -1,0 +1,195 @@
+---
+title: "Dashboard do Boletim estatístico"
+author: "Vitor"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    social: menu
+    source_code: embed
+runtime: shiny    
+---
+
+```{r global, include=FALSE}
+pacman::p_load(rbokeh,flexdashboard, ggplot2, dplyr, sf, plotly,
+               tidyr, tidylog, datasets)
+
+# Paths
+root     <-  "C:/Users/Utilizador/Desktop/R_STP/"
+input    <- paste0(root, "input/")
+output   <- paste0(root, "output/")
+tmp      <- paste0(root, "tmp/")
+code     <- paste0(root, "code/")
+alunos   <- paste0(root, "alunos/")
+
+# Acerta a hora de STP
+Sys.setenv(TZ="UCT")
+#######################################
+
+base_alunos <- readRDS(paste0(tmp, "alunos_todos_v2.RData"))
+
+data(iris)
+```
+
+
+
+São Tomé e Príncipe
+=================
+
+
+Column {.sidebar}
+-----------------------------------------------------------------------
+
+```{r}
+
+base_escolas <- base_alunos %>% 
+  group_by(distrito, nome_da_escola, classe) %>%
+  mutate(menino=ifelse(sexo=="M", 1, 0), 
+         menina=ifelse(sexo=="F", 1, 0)) %>% 
+  summarise(n_alunos=n(), 
+            media_idade=mean(idade, na.rm=TRUE), 
+            prop_menino=mean(menino, na.rm=TRUE), 
+            prop_menina=mean(menina, na.rm=TRUE)) %>% 
+  filter(!is.na(nome_da_escola)) %>% 
+  ungroup() %>% 
+  dplyr::select(-nome_da_escola) %>% 
+  dplyr::select(-distrito)
+
+selectInput('xcol', 'Variável do eixo X', names(base_escolas))
+
+    
+selectInput('ycol', 'Variável do eixo y', names(base_escolas),
+                selected=names(base_escolas)[[2]])
+
+#numericInput('clusters', 'Número de clusters', 3,
+#              min = 1, max = 9)
+```
+
+Column
+---------------------------------------------------------------
+
+### K Means
+
+```{r}
+palette(c("#E41A1C", "#377EB8", "#4DAF4A", "#984EA3", "#FF7F00", "#FFFF33", "#A65628", "#F781BF", "#999999"))
+
+# Combine the selected variables into a new data frame
+
+base_escolas2<- base_escolas %>% 
+  dplyr::select(nome_da_escola)
+
+
+selectedData <- reactive({base_escolas[, c(input$xcol, input$ycol)]})
+
+#selectedData <- reactive({base_escolas %>% 
+#    select( c(input$xcol, input$ycol))  })
+
+#clusters <- reactive({
+#  kmeans(selectedData(), input$clusters)
+#})
+
+renderPlot({
+  plot(selectedData, 
+       x=selectedData$xcol, 
+       y=selectedData$ycol)})
+
+
+#plot_ly(selectedData(),
+#        x = input$xcol,
+#        y = input$ycol, 
+#        type = 'point')
+
+
+#renderPlot({
+#  par(mar = c(5.1, 4.1, 0, 1))
+#  plot(selectedData(),
+#       col = clusters()$cluster,
+#       pch = 20, cex = 3)
+#  points(clusters()$centers, pch = 4, cex = 4, lwd = 4)
+#})
+```
+
+
+
+
+
+Água Grande
+==================
+
+
+Column {data-width=600}
+------------------------------------------------------------
+
+### Dispersão meninas vs meninos
+
+```{r}
+
+base_sexo <- base_alunos %>% 
+  dplyr::filter(distrito=="Água Grande")%>% 
+  group_by(nome_da_escola, sexo) %>% 
+  summarise(contagem_alunos=n()) %>% 
+  pivot_wider(id_cols="nome_da_escola", 
+              names_from="sexo", 
+              values_from="contagem_alunos") %>% 
+  filter(!is.na(nome_da_escola)) 
+
+grafico2 <- base_sexo %>% 
+  ggplot(aes(x=M, 
+             y=F, 
+             color=nome_da_escola, size=20))+
+  geom_point()+
+  theme(legend.position = "none") +
+  geom_text(aes(label=nome_da_escola), size=3)
+
+
+grafico2
+
+```
+
+
+Column {data-width=400}
+----------------------------------------------------------------
+
+### Pirãmide etária
+
+```{r}
+# Abre a base dos alunos
+base_piramide <- base_alunos %>% 
+  dplyr::filter(distrito=="Água Grande") %>% 
+  dplyr::group_by(sexo, idade) %>% 
+  dplyr::summarise(contagem_alunos = n()) %>% 
+  dplyr::mutate(contagem_alunos= 
+           replace(contagem_alunos, 
+                   sexo=="F", (-1)* contagem_alunos)) %>% 
+  dplyr::arrange(idade, sexo)
+
+
+grafico_piramide <- ggplot(base_piramide, 
+                    aes(x= idade, 
+                     y= contagem_alunos, 
+                     fill= sexo)) +
+  geom_bar(data=subset(base_piramide, sexo=="M"),
+           stat="identity")+
+  geom_bar(data=subset(base_piramide, sexo=="F"),
+           stat="identity") +
+  scale_y_continuous(breaks = seq(-3000, 3000, 1000), 
+                   labels = abs(seq(-3000, 3000, 1000)), 
+                   "Quantidade de alunos") +
+  coord_flip() +
+  scale_fill_brewer(palette="Set2") +
+  theme_bw()
+
+grafico_piramide 
+
+```
+
+### Comprimento da pétala
+
+```{r}
+figure(width = NULL, height = NULL) %>%
+  ly_points(Sepal.Length, Sepal.Width, data = iris,
+    color = Petal.Width)
+```
+
+Pagina 2
+==================
+

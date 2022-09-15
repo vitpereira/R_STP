@@ -1,0 +1,63 @@
+---
+title: "Nosso primeiro dashboard"
+author: "Vitor"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    social: menu
+    source_code: embed
+---
+
+About {data-navmenu="Explorar os menus"}
+----------------------------------------
+----------------------------------------
+
+
+
+```{r setup, include=FALSE}
+pacman::p_load(rbokeh,flexdashboard, ggplot2)
+```
+
+Column {data-width=600}
+------------------------------------------------------------
+### Espécies de flores
+
+```{r}
+
+base_flores <-iris 
+
+grafico1 <- base_flores %>% 
+  ggplot(aes(x=Sepal.Length, 
+             y=Sepal.Width, 
+             color=Species, 
+             size=10))+
+  geom_point()+
+  theme(legend.position = "bottom")
+
+grafico1
+
+#figure(width = NULL, height = NULL) %>%
+#  ly_points(Sepal.Length, Sepal.Width, data = iris, color = Species)
+# figure() %>%
+#   ly_points(Sepal.Length, Sepal.Width, data = iris,
+#     color = Species, glyph = Species)
+```
+
+
+Column {data-width=500}
+-----------------------------------------------------------------------
+
+### Espécies (Quantile)
+
+```{r}
+figure(width = NULL, height = NULL, legend_location = "top_left") %>%
+  ly_quantile(Sepal.Length, group = Species, data = iris)
+```
+
+### Comprimento da pétala
+
+```{r}
+figure(width = NULL, height = NULL) %>%
+  ly_points(Sepal.Length, Sepal.Width, data = iris,
+    color = Petal.Width)
+```

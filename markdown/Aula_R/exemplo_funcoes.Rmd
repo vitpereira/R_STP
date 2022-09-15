@@ -1,0 +1,105 @@
+---
+title: "Exemplo de funções e tabelas"
+author: "vitor"
+date: '`r format(Sys.Date(), "%d/%m/%Y")`'
+output: html_document
+---
+
+
+```{r, results='hide', warning=FALSE, message=FALSE, fig.show='hide'}
+pacman:: p_load(dplyr, ggplot2, gt, epiDisplay, crosstable, tidylog, purrr)
+
+# Paths
+root     <-  "C:/Users/Utilizador/Desktop/R_STP/"
+input    <- paste0(root, "input/")
+output   <- paste0(root, "output/")
+tmp      <- paste0(root, "tmp/")
+code     <- paste0(root, "code/")
+alunos   <- paste0(root, "alunos/")
+
+# Le todas as colunas e decide quais sao numericas
+#col_types <- readr::cols(.default = readr::col_character())
+
+# Acerta a hora de STP
+Sys.setenv(TZ="UCT")
+#######################################
+
+base_alunos <- readRDS(paste0(tmp, "alunos_todos_v2.RData"))
+
+```
+
+```{r}
+tabela_distrito <- function(x){
+  
+  y <-base_alunos %>% 
+    filter(distrito==x)
+  
+  print(x)  
+  
+  crosstable(y, c(classe_f), by=c(distorcao), total="both", percent_pattern="{n} ({p_row})", percent_digits=0) %>% as_flextable()
+}
+
+vetor_distritos = c("Água Grande", "Cantagalo", "Caué", "Lembá",
+                    "Lobata", "Mé-Zochi", "R.A.Príncipe")
+
+walk(vetor_distritos, tabela_distrito)
+```
+
+
+
+```{r}
+
+############
+tabela_distrito <- function(x){
+  
+  y <-base_alunos %>% 
+    filter(distrito==x)
+
+print(x)  
+  
+crosstable(y, c(classe_f), by=c(distorcao), total="both", percent_pattern="{n} ({p_row})", percent_digits=0) %>% as_flextable()
+}
+###################
+
+vetor_distritos = c("Água Grande", "Cantagalo", "Caué", "Lembá",
+                    "Lobata", "Mé-Zochi", "R.A.Príncipe")
+
+map(vetor_distritos, tabela_distrito)
+
+tabela_distrito("Água Grande")
+tabela_distrito("Cantagalo")
+tabela_distrito("Caué")
+tabela_distrito("Lembá")
+tabela_distrito("Lobata")
+tabela_distrito("Mé-Zochi")
+tabela_distrito("R.A.Príncipe")
+
+```
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
