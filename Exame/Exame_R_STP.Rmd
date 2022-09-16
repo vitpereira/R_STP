@@ -1,5 +1,5 @@
 ---
-title: "Exame de R/"
+title: "Exame de R/STP"
 author: "Vitor Pereira"
 date: "15/09/2022"
 output: pdf_document
